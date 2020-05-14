@@ -115,4 +115,6 @@ function crashClientIfScriptIsAbleToLoadOtherwiseReportError(scriptName) {
     }
 }
 
+var semanticSegment = /[^\w\.]{0,1}(\w*?\.)((\w*?\.)*)(\w*)$/
+
 script.import("Core.lib");
