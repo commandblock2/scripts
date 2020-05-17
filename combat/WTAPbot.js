@@ -44,6 +44,7 @@ module =
             aim()
             distance = PlayerExtension.getDistanceToEntityBox(mc.thePlayer, target)
 
+            reach = moduleManager.getModule("Reach");
             var maxDistance = reach.state ? reach.getValue("CombatReach").get() : 3.0
 
             if (distance < maxDistance - 0.5) {
@@ -51,12 +52,12 @@ module =
                 mc.gameSettings.keyBindForward.pressed = false
                 mc.thePlayer.setSprinting(false)
             }
-            else if (distance > maxDistance - 0.1 && distance < maxDistance) {
+            else if (distance > maxDistance - 0.2 && distance < maxDistance) {
                 mc.gameSettings.keyBindForward.pressed = true
                 mc.gameSettings.keyBindBack.pressed = false
                 mc.thePlayer.setSprinting(false)
             }
-            else if (distance > maxDistance) {
+            else if (distance > maxDistance - 0.1) {
                 mc.gameSettings.keyBindForward.pressed = true
                 mc.gameSettings.keyBindBack.pressed = false
                 mc.thePlayer.setSprinting(true)
