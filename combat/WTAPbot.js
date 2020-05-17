@@ -5,6 +5,7 @@ PlayerExtension = Java.type("net.ccbluex.liquidbounce.utils.extensions.PlayerExt
 
 var countDownClicks = 5
 
+var target = null
 var lasttarget = null
 var countDown = countDownClicks
 
@@ -15,49 +16,59 @@ var forEach = Array.prototype.forEach;
 module =
 {
     name: "WTAPbot",
-    description: "Bot that uses WTAP to ",
+    description: "Bot that uses WTAP(mostly legit), left click 5 times to start(facing the same target), right click to stop",
     author: "commandblock2",
     category: "combat",
     values:
         [
-            
+
         ],
-    
-    onRender3D: function() 
-    {
+
+    onRender3D: function () {
         thisFrameLeftDown = mc.gameSettings.keyBindAttack.isKeyDown()
 
-        if(!lastFrameLeftDown && thisFrameLeftDown)
+        if (!lastFrameLeftDown && thisFrameLeftDown)
             onLeftClick()
 
-        if (countDown == 0)
-        {
-            distance = PlayerExtension.getDistanceToEntityBox(mc.thePlayer,target)
+        if (countDown == 0) {
+
+            if (target == null || PlayerExtension.getDistanceToEntityBox(mc.thePlayer, target) > maxDistance + 10 || mc.gameSettings.keyBindUseItem.isKeyDown()) {
+                countDown = countDownClicks
+                chat.print("§c[WTAP]§7Target release")
+                mc.gameSettings.keyBindForward.pressed = false
+                mc.gameSettings.keyBindBack.pressed = false
+                mc.thePlayer.setSprinting(false)
+                return
+            }
+
+            aim()
+            distance = PlayerExtension.getDistanceToEntityBox(mc.thePlayer, target)
 
             var maxDistance = reach.state ? reach.getValue("CombatReach").get() : 3.0
 
-            if (distance < maxDistance - 0.1)
-            {
+            if (distance < maxDistance - 0.5) {
                 mc.gameSettings.keyBindBack.pressed = true
                 mc.gameSettings.keyBindForward.pressed = false
+                mc.thePlayer.setSprinting(false)
             }
-            else if (distance > maxDistance + 0.1)
-            {
+            else if (distance > maxDistance - 0.1 && distance < maxDistance) {
                 mc.gameSettings.keyBindForward.pressed = true
                 mc.gameSettings.keyBindBack.pressed = false
+                mc.thePlayer.setSprinting(false)
             }
-            else if (distance > maxDistance + 0.3)
-            {
+            else if (distance > maxDistance) {
                 mc.gameSettings.keyBindForward.pressed = true
                 mc.gameSettings.keyBindBack.pressed = false
-
                 mc.thePlayer.setSprinting(true)
             }
-            else
-            {
+            else {
+                mc.gameSettings.keyBindForward.pressed = false
                 mc.gameSettings.keyBindBack.pressed = false
-                mc.gameSettings.keyBindBack.pressed = false
+                mc.thePlayer.setSprinting(false)
             }
+        }
+        else {
+            trigger.state = false
         }
 
         lastFrameLeftDown = thisFrameLeftDown
@@ -69,51 +80,56 @@ module =
     onDisable: function () { },
 }
 
-function onLeftClick()
-{
+function aim() {
+    trigger.state = true
+    RotationUtils.searchCenter(target.getEntityBoundingBox(), false, false, false, true).rotation.toPlayer(mc.thePlayer)
+}
+
+function onLeftClick() {
     entities = mc.theWorld.loadedEntityList
 
     mindiff = Number.MAX_VALUE
     target = null
-    forEach.call(entities,function (elem)
-    {
+    forEach.call(entities, function (elem) {
         diff = RotationUtils.getRotationDifference(elem)
 
         reach = moduleManager.getModule("Reach");
         var maxDistance = reach.state ? reach.getValue("CombatReach").get() : 3.0
-        if (PlayerExtension.getDistanceToEntityBox(mc.thePlayer,elem) > maxDistance + 5)
+        if (PlayerExtension.getDistanceToEntityBox(mc.thePlayer, elem) > maxDistance + 10)
             return
 
         if (elem == mc.thePlayer)
             return
 
-        if (diff < mindiff)
-        {
+        if (diff < mindiff) {
             mindiff = diff
             target = elem
         }
     })
 
-    if(lasttarget == target)
-        if(countDown > 0)
+    if (lasttarget == target && target) {
+        if (countDown > 0)
             countDown--
-    else
-    {
+        else
+            return
+    }
+    else {
         countDown = countDownClicks
         lasttarget = target
     }
 
-    switch (countDown) 
-    {
+    switch (countDown) {
         case 2:
-            chat.print("Click 2 more time to lock target " + target.getName())
+            chat.print("§c[WTAP]§7Click 2 more time to lock target " + target.getName())
             break;
 
         case 0:
-            chat.print("Target " + target.getName() +" acquiring lock")
+            chat.print("§c[WTAP]§7Target §d" + target.getName() + " §7acquiring lock")
         default:
             break;
     }
 }
 
 script.import("Core.lib")
+
+trigger = LiquidBounce.moduleManager.getModule("trigger")
