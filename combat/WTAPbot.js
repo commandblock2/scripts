@@ -37,7 +37,7 @@ module =
                 chat.print("§c[WTAP]§7Lock release")
                 mc.gameSettings.keyBindForward.pressed = false
                 mc.gameSettings.keyBindBack.pressed = false
-                mc.gameSettings.keyBindSprint = false
+                mc.thePlayer.setSprinting(false)
                 return
             }
 
@@ -50,22 +50,22 @@ module =
             if (distance < maxDistance - 0.5) {
                 mc.gameSettings.keyBindBack.pressed = true
                 mc.gameSettings.keyBindForward.pressed = false
-                mc.thePlayer.keyBindSprint = false
+                mc.thePlayer.setSprinting(false)
             }
             else if (distance > maxDistance - 0.2 && distance < maxDistance - 0.1) {
                 mc.gameSettings.keyBindForward.pressed = true
                 mc.gameSettings.keyBindBack.pressed = false
-                mc.thePlayer.keyBindSprint = false
+                mc.thePlayer.setSprinting(false)
             }
             else if (distance > maxDistance - 0.1) {
                 mc.gameSettings.keyBindForward.pressed = true
                 mc.gameSettings.keyBindBack.pressed = false
-                mc.thePlayer.keyBindSprint = true
+                mc.thePlayer.setSprinting(true)
             }
             else {
                 mc.gameSettings.keyBindForward.pressed = false
                 mc.gameSettings.keyBindBack.pressed = false
-                mc.thePlayer.keyBindSprint = false
+                mc.thePlayer.setSprinting(false)
             }
         }
         else {
