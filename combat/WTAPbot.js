@@ -34,10 +34,10 @@ module =
 
             if (target == null || PlayerExtension.getDistanceToEntityBox(mc.thePlayer, target) > maxDistance + 10 || mc.gameSettings.keyBindUseItem.isKeyDown()) {
                 countDown = countDownClicks
-                chat.print("§c[WTAP]§7Target release")
+                chat.print("§c[WTAP]§7Lock release")
                 mc.gameSettings.keyBindForward.pressed = false
                 mc.gameSettings.keyBindBack.pressed = false
-                mc.thePlayer.setSprinting(false)
+                mc.gameSettings.keyBindSprint = false
                 return
             }
 
@@ -50,22 +50,22 @@ module =
             if (distance < maxDistance - 0.5) {
                 mc.gameSettings.keyBindBack.pressed = true
                 mc.gameSettings.keyBindForward.pressed = false
-                mc.thePlayer.setSprinting(false)
+                mc.thePlayer.keyBindSprint = false
             }
-            else if (distance > maxDistance - 0.2 && distance < maxDistance) {
+            else if (distance > maxDistance - 0.2 && distance < maxDistance - 0.1) {
                 mc.gameSettings.keyBindForward.pressed = true
                 mc.gameSettings.keyBindBack.pressed = false
-                mc.thePlayer.setSprinting(false)
+                mc.thePlayer.keyBindSprint = false
             }
             else if (distance > maxDistance - 0.1) {
                 mc.gameSettings.keyBindForward.pressed = true
                 mc.gameSettings.keyBindBack.pressed = false
-                mc.thePlayer.setSprinting(true)
+                mc.thePlayer.keyBindSprint = true
             }
             else {
                 mc.gameSettings.keyBindForward.pressed = false
                 mc.gameSettings.keyBindBack.pressed = false
-                mc.thePlayer.setSprinting(false)
+                mc.thePlayer.keyBindSprint = false
             }
         }
         else {
