@@ -2,10 +2,13 @@
 Method = Java.type("java.lang.reflect.Method")
 Field = Java.type("java.lang.reflect.Field")
 Class = Java.type("java.lang.Class")
+ClassLoader = Java.type("java.lang.ClassLoader")
+ClassPath = Java.type("com.google.common.reflect.ClassPath")
 File = Java.type("java.io.File")
 Script = Java.type("net.ccbluex.liquidbounce.script.Script")
 
 var multilineMsg = ""
+var history=[]
 
 module =
 {
@@ -16,7 +19,9 @@ module =
     values:
         [
             usePrefix = value.createBoolean("UsePrefix", false),
-            prefix = value.createText("Prefix", ">")
+            prefix = value.createText("Prefix", ">"),
+
+            recordHistory = value.createBoolean("History", true)
         ],
 
 
@@ -25,11 +30,61 @@ module =
 
     onDisable: function () { chat.print("§6[nashorn REPL]: Quiting REPL") },
 
-    onPacket: repl
+    onPacket: function (event)
+    {
+        var packet = event.getPacket()
+        if (packet instanceof C01PacketChatMessage)
+            repl(event, packet)
+        else if (packet instanceof C14PacketTabComplete)
+            makeCompletion(event, packet)
+    }
 }
 
-function repl(event) {
-    var packet = event.getPacket()
+var semanticSegment = /[^\w\.]{0,1}((\w*?\.)*)(\w*)/
+
+function makeCompletion(event, packet) {
+
+    fieldMessage = packet.class.getDeclaredField("field_149420_a") // Hack Hack Hack
+    fieldMessage.setAccessible(true)
+    messagestr = fieldMessage.get(packet)
+
+    if (!usePrefix.get() || messagestr.message.startsWith(prefix.get())){
+        event.cancelEvent()
+        
+        guiChat = mc.currentScreen
+
+        fieldWaitOnAutoCompletion = guiChat.class.getDeclaredField("field_146414_r") // Hack Hack Hack
+        fieldWaitOnAutoCompletion.setAccessible(true)
+        fieldWaitOnAutoCompletion.set(guiChat, true)
+
+        if (messagestr.match(semanticSegment))
+        {
+            var pre = messagestr.match(semanticSegment)[1]
+            var post = messagestr.match(semanticSegment)[3]
+
+            if (pre == "")
+            try {
+                pre = eval(post).toString().match(semanticSegment)[1]
+            } catch (error) {}
+                
+        }
+
+        evaled_pre = pre.substring(0, pre.length - 1)
+        completion = []
+
+        //if evaled_pre is package
+        
+        //if evaled_pre is Class
+
+        //if evaled_pre is instance
+
+        chat.print(pre + " " + post)
+
+        guiChat.onAutocompleteResponse(["fuck","fucka","fucku"])
+    }
+}
+
+function repl(event, packet) {
 
     if (packet instanceof C01PacketChatMessage) {
         var statement = packet.getMessage()
@@ -52,6 +107,9 @@ function repl(event) {
                     multilineMsg = statement
                 else
                     multilineMsg += statement
+                
+                if (recordHistory.get())
+                    history.push(statement)
 
                 evaluated = eval(multilineMsg)
                 chat.print("§6[nashorn REPL]: §7" + evaluated)
@@ -76,31 +134,8 @@ function memFn(className) {
     });
 }
 
-function memFnI(instanceName) {
-    targetClass = eval(instanceName).getClass()
-    functionList = targetClass.getDeclaredMethods()
-
-    forEach.call(functionList, function (element) {
-        chat.print("§6[nashorn REPL]: §7" + element)
-    });
-}
-
-function memFld(className) {
-    targetClass = Class.forName(className)
-    fieldList = targetClass.getDeclaredFields()
-
-    forEach.call(fieldList, function (element) {
-        chat.print("§6[nashorn REPL]: §7" + element)
-    });
-}
-
-function memFldI(instanceName) {
-    targetClass = eval(instanceName).getClass()
-    fieldList = targetClass.getDeclaredFields()
-
-    forEach.call(fieldList, function (element) {
-        chat.print("§6[nashorn REPL]: §7" + element)
-    });
+function inspect(identifiierName){
+    
 }
 
 function crashClientIfScriptIsAbleToLoadOtherwiseReportError(scriptName) {
@@ -114,7 +149,5 @@ function crashClientIfScriptIsAbleToLoadOtherwiseReportError(scriptName) {
         chat.print("§cError in " + scriptName + ": " + error)
     }
 }
-
-var semanticSegment = /[^\w\.]{0,1}((\w*?\.)*)(\w*)$/
 
 script.import("Core.lib");
