@@ -3,12 +3,15 @@ Method = Java.type("java.lang.reflect.Method")
 Field = Java.type("java.lang.reflect.Field")
 Class = Java.type("java.lang.Class")
 ClassLoader = Java.type("java.lang.ClassLoader")
+Thread = Java.type("java.lang.Thread")
+Package = Java.type("java.lang.Package")
 ClassPath = Java.type("com.google.common.reflect.ClassPath")
 File = Java.type("java.io.File")
 Script = Java.type("net.ccbluex.liquidbounce.script.Script")
 
 var multilineMsg = ""
-var history=[]
+var history = []
+var identifiers = []
 
 module =
 {
@@ -21,7 +24,8 @@ module =
             usePrefix = value.createBoolean("UsePrefix", false),
             prefix = value.createText("Prefix", ">"),
 
-            recordHistory = value.createBoolean("History", true)
+            recordHistory = value.createBoolean("History", true),
+            keywordsInCompletion = value.createBoolean("keywordsInCompletion", false)
         ],
 
 
@@ -30,8 +34,7 @@ module =
 
     onDisable: function () { chat.print("§6[nashorn REPL]: Quiting REPL") },
 
-    onPacket: function (event)
-    {
+    onPacket: function (event) {
         var packet = event.getPacket()
         if (packet instanceof C01PacketChatMessage)
             repl(event, packet)
@@ -48,39 +51,73 @@ function makeCompletion(event, packet) {
     fieldMessage.setAccessible(true)
     messagestr = fieldMessage.get(packet)
 
-    if (!usePrefix.get() || messagestr.message.startsWith(prefix.get())){
+    if (!usePrefix.get() || messagestr.startsWith(prefix.get())) {
         event.cancelEvent()
-        
+
         guiChat = mc.currentScreen
 
         fieldWaitOnAutoCompletion = guiChat.class.getDeclaredField("field_146414_r") // Hack Hack Hack
         fieldWaitOnAutoCompletion.setAccessible(true)
         fieldWaitOnAutoCompletion.set(guiChat, true)
 
-        if (messagestr.match(semanticSegment))
-        {
+        if (messagestr.match(semanticSegment)) {
             var pre = messagestr.match(semanticSegment)[1]
             var post = messagestr.match(semanticSegment)[3]
 
-            if (pre == "")
-            try {
-                pre = eval(post).toString().match(semanticSegment)[1]
-            } catch (error) {}
-                
+            /*if (pre == "")
+                try {
+                    pre = eval(post).toString().match(semanticSegment)[1]
+                } catch (error) { }*/
+
         }
 
         evaled_pre = pre.substring(0, pre.length - 1)
         completion = []
 
         //if evaled_pre is package
-        
-        //if evaled_pre is Class
 
-        //if evaled_pre is instance
+        try {
+            //add sub class
+            classpath = ClassPath.from(Thread.currentThread().getContextClassLoader())
+            Java.from(classpath.getTopLevelClasses(evaled_pre)).forEach(
+                function (elem) {
+                    completion.push(usePrefix.get() ? prefix.get() + elem : elem)
+                }
+            )
 
-        chat.print(pre + " " + post)
+            //add sub packages
+            Java.from(Package.getPackages()).forEach(
+                function (elem) {
+                    try {
+                        package_ = elem.toString().match(/package (.*),{0,1}/)[1]
+                        if (package_.startsWith(evaled_pre)) {
+                            partial = package_.match(new RegExp(evaled_pre + "\\.(.*?)\\."))[1]
 
-        guiChat.onAutocompleteResponse(["fuck","fucka","fucku"])
+                            partial = (usePrefix.get() ? prefix.get() : "") + evaled_pre + "." + partial
+
+                            if (completion.indexOf(partial) == -1)
+                                completion.push(partial)
+                        }
+                    }
+                    catch (err) { }
+                }
+            )
+        }
+        catch (e) { }
+
+        //if evaled_pre is Class or instance
+        inspect(evaled_pre).forEach(function (elem) { completion.push((usePrefix.get() ? prefix.get() : "") + elem) })
+
+        //add js keywords
+        !keywordsInCompletion.get() || ["abstract", "arguments", "await", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "debugger", "default", "delete", "do", "double", "else", "enum", "eval", "export", "extends", "false", "final", "finally", "float", "for", "function", "goto", "if", "implements", "in", "instanceof", "int", "interface", "let", "long", "native", "new", "null", "package", "private", "protected", "public", "return", "short", "static", "super", "switch", "synchronized", "this", "throw", "throws", "transient", "true", "try", "typeof", "var", "void", "volatile", "while", "with", "yield"].forEach(
+            function (e) { completion.push((usePrefix.get() ? prefix.get() : "") + e) }
+        )
+
+        //add all identifiers
+        identifiers.forEach(function (e) { completion.push((usePrefix.get() ? prefix.get() : "") + e) })
+
+        completion.sort(function (elem) { return (elem.indexOf(post) == -1 ? 1 : -1) })
+        guiChat.onAutocompleteResponse(completion)
     }
 }
 
@@ -107,7 +144,7 @@ function repl(event, packet) {
                     multilineMsg = statement
                 else
                     multilineMsg += statement
-                
+
                 if (recordHistory.get())
                     history.push(statement)
 
@@ -125,17 +162,36 @@ function repl(event, packet) {
 
 var forEach = Array.prototype.forEach;
 
-function memFn(className) {
-    targetClass = Class.forName(className)
-    functionList = targetClass.getDeclaredMethods()
 
-    forEach.call(functionList, function (element) {
-        chat.print("§6[nashorn REPL]: §7" + element)
-    });
-}
+function inspect(identifierName) {
+    members = []
 
-function inspect(identifiierName){
-    
+    var class_ = null
+
+    try {
+        class_ = Class.forName(identifierName)
+    } catch (e) {}
+
+    try {
+        if(!class_) 
+        {
+            class_ = eval(identifierName).getClass()
+        }
+    } catch (e) {}
+
+    try {
+        if(!class_) 
+        {
+            class_ = Class.forName(eval(identifierName).toString())
+        }
+    }
+    catch (e) {}
+
+    try {
+        Java.from(class_.getDeclaredFields()).forEach(function (elem) { chat.print(elem.toString()) ;members.push(elem.toString().match(new RegExp(".* " + class_.toString() + "\\.(.*)"))[1]) })
+        Java.from(class_.getDeclaredMethods()).forEach(function (elem) { members.push(elem.toString().match(new RegExp(".* s" + class_.toString() + "\\.(.*)"))[1]) })
+    } catch (e) { chat.print(e) }
+    return members
 }
 
 function crashClientIfScriptIsAbleToLoadOtherwiseReportError(scriptName) {
