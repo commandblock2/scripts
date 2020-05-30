@@ -1,12 +1,14 @@
 //Copyright 2020 commandblock2 distributed under AGPL-3.0-or-later
 RotationUtils = Java.type("net.ccbluex.liquidbounce.utils.RotationUtils")
-PlayerExtension = Java.type("net.ccbluex.liquidbounce.utils.extensions.PlayerExtensionKt");
+PlayerExtension = Java.type("net.ccbluex.liquidbounce.utils.extensions.PlayerExtensionKt")
+Class = Java.type("java.lang.Class")
 
 
 var countDownClicks = 5
 
 var target = null
 var lasttarget = null
+var isEnemy
 var countDown = countDownClicks
 
 var lastFrameLeftDown = false
@@ -21,7 +23,7 @@ module =
     category: "combat",
     values:
         [
-
+            noBack = value.createBoolean("No S-Tap", false)
         ],
 
     onRender3D: function () {
@@ -32,7 +34,7 @@ module =
 
         if (countDown == 0) {
 
-            if (target == null || PlayerExtension.getDistanceToEntityBox(mc.thePlayer, target) > maxDistance + 10 || mc.gameSettings.keyBindUseItem.isKeyDown()) {
+            if (target == null || PlayerExtension.getDistanceToEntityBox(mc.thePlayer, target) > maxDistance + 10 || mc.gameSettings.keyBindPickBlock.isKeyDown()) {
                 countDown = countDownClicks
                 chat.print("§c[WTAP]§7Lock release")
                 mc.gameSettings.keyBindForward.pressed = false
@@ -47,17 +49,17 @@ module =
             reach = moduleManager.getModule("Reach");
             var maxDistance = reach.state ? reach.getValue("CombatReach").get() : 3.0
 
-            if (distance < maxDistance - 0.5) {
+            if (distance < maxDistance - 0.5 && !noBack.get()) {
                 mc.gameSettings.keyBindBack.pressed = true
                 mc.gameSettings.keyBindForward.pressed = false
                 mc.thePlayer.setSprinting(false)
             }
-            else if (distance > maxDistance - 0.2 && distance < maxDistance - 0.1) {
+            else if (distance > maxDistance - 0.2 && distance < maxDistance) {
                 mc.gameSettings.keyBindForward.pressed = true
                 mc.gameSettings.keyBindBack.pressed = false
                 mc.thePlayer.setSprinting(false)
             }
-            else if (distance > maxDistance - 0.1) {
+            else if (distance > maxDistance) {
                 mc.gameSettings.keyBindForward.pressed = true
                 mc.gameSettings.keyBindBack.pressed = false
                 mc.thePlayer.setSprinting(true)
@@ -69,20 +71,31 @@ module =
             }
         }
         else {
-            trigger.state = false
+            autoClicker.state = false
+            mc.gameSettings.keyBindAttack.pressed = false
         }
 
         lastFrameLeftDown = thisFrameLeftDown
     },
 
-    onEnable: function () { },
+    onEnable: function () 
+    {
+        isEnemy = killAura.class.getDeclaredMethod("isEnemy",Class.forName("net.minecraft.entity.Entity"))
+        isEnemy.setAccessible(true)
+    },
 
 
     onDisable: function () { },
+    onPacket: function(event)
+    {
+        if (event.getPacket() instanceof S12PacketEntityVelocity && mc.theWorld.getEntityByID(event.getPacket().getEntityID()) == mc.thePlayer)
+            mc.thePlayer.setSprinting(false)
+    }
 }
 
 function aim() {
-    trigger.state = true
+    autoClicker.state = true
+    mc.gameSettings.keyBindAttack.pressed = true
     RotationUtils.searchCenter(target.getEntityBoundingBox(), false, false, false, true).rotation.toPlayer(mc.thePlayer)
 }
 
@@ -99,7 +112,7 @@ function onLeftClick() {
         if (PlayerExtension.getDistanceToEntityBox(mc.thePlayer, elem) > maxDistance + 10)
             return
 
-        if (elem == mc.thePlayer)
+        if (elem == mc.thePlayer || !isEnemy.invoke(killAura, elem))
             return
 
         if (diff < mindiff) {
@@ -133,4 +146,5 @@ function onLeftClick() {
 
 script.import("Core.lib")
 
-trigger = LiquidBounce.moduleManager.getModule("trigger")
+autoClicker = LiquidBounce.moduleManager.getModule("autoClicker")
+killAura = LiquidBounce.moduleManager.getModule("killaura")
