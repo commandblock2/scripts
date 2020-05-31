@@ -73,49 +73,79 @@ function makeCompletion(event, packet) {
 
         evaled_pre = pre.substring(0, pre.length - 1)
         completion = []
+        prefixMatchedOnlyCompletion = []
 
         //if evaled_pre is package
 
         try {
             //add sub class
-            classpath = ClassPath.from(Thread.currentThread().getContextClassLoader())
-            Java.from(classpath.getTopLevelClasses(evaled_pre)).forEach(
-                function (elem) {
-                    completion.push(usePrefix.get() ? prefix.get() + elem : elem)
-                }
-            )
+            if (evaled_pre != "") {
 
-            //add sub packages
-            Java.from(Package.getPackages()).forEach(
-                function (elem) {
-                    try {
-                        package_ = elem.toString().match(/package (.*),{0,1}/)[1]
-                        if (package_.startsWith(evaled_pre)) {
-                            partial = package_.match(new RegExp(evaled_pre + "\\.(.*?)\\."))[1]
-
-                            partial = (usePrefix.get() ? prefix.get() : "") + evaled_pre + "." + partial
-
-                            if (completion.indexOf(partial) == -1)
-                                completion.push(partial)
-                        }
+                classpath = ClassPath.from(Thread.currentThread().getContextClassLoader())
+                Java.from(classpath.getTopLevelClasses(evaled_pre)).forEach(
+                    function (elem) {
+                        completion.push(usePrefix.get() ? prefix.get() + elem : elem)
                     }
-                    catch (err) { }
-                }
-            )
+                )
+
+                //add sub packages
+                Java.from(Package.getPackages()).forEach(
+                    function (elem) {
+                        try {
+                            package_ = elem.toString().match(/package (.*),{0,1}/)[1]
+                            if (package_.startsWith(evaled_pre)) {
+                                partial = package_.match(new RegExp(evaled_pre + "\\.(.*?)\\."))[1]
+
+                                partial = (usePrefix.get() ? prefix.get() : "") + evaled_pre + "." + partial
+
+                                if (completion.indexOf(partial) == -1)
+                                    completion.push(partial)
+                            }
+                        }
+                        catch (err) { }
+                    }
+                )
+            }
         }
         catch (e) { }
 
         //if evaled_pre is Class or instance
+        //if is Class with path
+        try {
+            if (Class.forName(evaled_pre).getCanonicalName() == evaled_pre) {
+                //auto import that package
+                imported = evaled_pre.match(semanticSegment)[3].toString()
+                statement = imported + " = Java.type(\"" + evaled_pre + "\")"
+                chat.print("§6[nashorn REPL]: automatically imported: §7" + statement)
+                history.push(statement)
+                eval(statement)
+
+                fieldInputField = guiChat.class.getDeclaredField("field_146415_a") // Hack Hack Hack
+                fieldInputField.setAccessible(true)
+                inputField = fieldInputField.get(guiChat)
+
+                chat.print("inputField" + inputField)
+
+                textField = inputField.class.getDeclaredField("field_146216_j")
+                textField.setAccessible(true)
+                textField.set(inputField,(usePrefix.get() ? prefix.get() : "") + imported)
+
+                evaled_pre = imported
+            }
+        } catch (e) { }
+
         inspect(evaled_pre).forEach(function (elem) { completion.push((usePrefix.get() ? prefix.get() : "") + elem) })
 
         //add js keywords
         !keywordsInCompletion.get() || ["abstract", "arguments", "await", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "debugger", "default", "delete", "do", "double", "else", "enum", "eval", "export", "extends", "false", "final", "finally", "float", "for", "function", "goto", "if", "implements", "in", "instanceof", "int", "interface", "let", "long", "native", "new", "null", "package", "private", "protected", "public", "return", "short", "static", "super", "switch", "synchronized", "this", "throw", "throws", "transient", "true", "try", "typeof", "var", "void", "volatile", "while", "with", "yield"].forEach(
-            function (e) { completion.push((usePrefix.get() ? prefix.get() : "") + e) }
+            function (e) { prefixMatchedOnlyCompletion.push((usePrefix.get() ? prefix.get() : "") + e) }
         )
 
         //add all identifiers
-        identifiers.forEach(function (e) { completion.push((usePrefix.get() ? prefix.get() : "") + e) })
+        identifiers.forEach(function (e) { prefixMatchedOnlyCompletion.push((usePrefix.get() ? prefix.get() : "") + e) })
 
+        prefixMatchedOnlyCompletion = prefixMatchedOnlyCompletion.filter(function (elem) { return elem.startsWith(messagestr)})
+        completion = prefixMatchedOnlyCompletion.concat(completion)
         completion.sort(function (elem) { return (elem.indexOf(post) == -1 ? 1 : -1) })
         guiChat.onAutocompleteResponse(completion)
     }
@@ -169,28 +199,26 @@ function inspect(identifierName) {
     var class_ = null
 
     try {
-        class_ = Class.forName(identifierName)
-    } catch (e) {}
+        class_ = Class.forName(identifierName) // if it is just a full path class(wont' work) like net.ccbluex.liquidbounce.LiquidBounce
+    } catch (e) { }
 
     try {
-        if(!class_) 
-        {
+        if (!class_) {
             class_ = eval(identifierName).getClass()
         }
-    } catch (e) {}
+    } catch (e) { }
 
     try {
-        if(!class_) 
-        {
-            class_ = Class.forName(eval(identifierName).toString())
+        if (!class_) {
+            class_ = eval(identifierName).class
         }
     }
-    catch (e) {}
+    catch (e) { }
 
     try {
-        Java.from(class_.getDeclaredFields()).forEach(function (elem) { chat.print(elem.toString()) ;members.push(elem.toString().match(new RegExp(".* " + class_.toString() + "\\.(.*)"))[1]) })
-        Java.from(class_.getDeclaredMethods()).forEach(function (elem) { members.push(elem.toString().match(new RegExp(".* s" + class_.toString() + "\\.(.*)"))[1]) })
-    } catch (e) { chat.print(e) }
+        Java.from(class_.getDeclaredFields()).forEach(function (elem) { members.push(identifierName + "." + elem.toString().match(new RegExp(".* " + class_.getCanonicalName() + "\\.(.*)"))[1]) })
+        Java.from(class_.getDeclaredMethods()).forEach(function (elem) { members.push(identifierName + "." + elem.toString().match(new RegExp(".* s" + class_.getCanonicalName() + "\\.(.*)"))[1]) })
+    } catch (e) { }
     return members
 }
 
