@@ -8,10 +8,15 @@ Package = Java.type("java.lang.Package")
 ClassPath = Java.type("com.google.common.reflect.ClassPath")
 File = Java.type("java.io.File")
 Script = Java.type("net.ccbluex.liquidbounce.script.Script")
+Remapper = Java.type("net.ccbluex.liquidbounce.script.remapper.Remapper")
 
 var multilineMsg = ""
 var history = []
 var identifiers = []
+var fields_obf = []
+var fields_deob = []
+var methods_obf = []
+var methods_deob = []
 
 module =
 {
@@ -29,7 +34,45 @@ module =
         ],
 
 
-    onEnable: function () { chat.print("§6[nashorn REPL]: Welcom to in Game js REPL") },
+    onEnable: function () {
+        chat.print("§6[nashorn REPL]: Welcom to in-game js REPL")
+
+        fieldsField = Remapper.INSTANCE.class.getDeclaredField("fields")
+        fieldsField.setAccessible(true)
+        fields_ = fieldsField.get(Remapper.INSTANCE)
+
+        Java.from(fields_.values()).forEach(function (elem) {
+
+            size = elem.keySet().size()
+
+            keySet = Java.from(elem.keySet())
+            values = Java.from(elem.values())
+
+            for (index = 0; index < size; index++) {
+                fields_obf.push(keySet[index])
+                fields_deob.push(values[index])
+            }
+        })
+
+        methodsField = Remapper.INSTANCE.class.getDeclaredField("methods")
+        methodsField.setAccessible(true)
+        methods_ = methodsField.get(Remapper.INSTANCE)
+
+
+        Java.from(methods_.values()).forEach(function (elem) {
+
+            size = elem.keySet().size()
+
+            keySet = Java.from(elem.keySet())
+            values = Java.from(elem.values())
+
+            for (index = 0; index < size; index++) {
+                methods_obf.push(keySet[index].match(/(.*?)(?:[\b\()])/)[1])
+                methods_deob.push(values[index])
+            }
+
+        })
+    },
 
 
     onDisable: function () { chat.print("§6[nashorn REPL]: Quiting REPL") },
@@ -43,7 +86,7 @@ module =
     }
 }
 
-var semanticSegment = /[^\w\.]{0,1}((\w*?\.)*)(\w*)/
+var semanticSegment = /(\b(\w*?\.)*)(\w*)(?!.*(?:\w*?\.))/
 
 function makeCompletion(event, packet) {
 
@@ -128,7 +171,7 @@ function makeCompletion(event, packet) {
 
                 textField = inputField.class.getDeclaredField("field_146216_j")
                 textField.setAccessible(true)
-                textField.set(inputField,(usePrefix.get() ? prefix.get() : "") + imported)
+                textField.set(inputField, (usePrefix.get() ? prefix.get() : "") + imported)
 
                 evaled_pre = imported
             }
@@ -144,7 +187,7 @@ function makeCompletion(event, packet) {
         //add all identifiers
         identifiers.forEach(function (e) { prefixMatchedOnlyCompletion.push((usePrefix.get() ? prefix.get() : "") + e) })
 
-        prefixMatchedOnlyCompletion = prefixMatchedOnlyCompletion.filter(function (elem) { return elem.startsWith(messagestr)})
+        prefixMatchedOnlyCompletion = prefixMatchedOnlyCompletion.filter(function (elem) { return elem.startsWith(messagestr) })
         completion = prefixMatchedOnlyCompletion.concat(completion)
         completion.sort(function (elem) { return (elem.indexOf(post) == -1 ? 1 : -1) })
         guiChat.onAutocompleteResponse(completion)
@@ -215,9 +258,26 @@ function inspect(identifierName) {
     }
     catch (e) { }
 
+
     try {
-        Java.from(class_.getDeclaredFields()).forEach(function (elem) { members.push(identifierName + "." + elem.toString().match(new RegExp(".* " + class_.getCanonicalName() + "\\.(.*)"))[1]) })
-        Java.from(class_.getDeclaredMethods()).forEach(function (elem) { members.push(identifierName + "." + elem.toString().match(new RegExp(".* s" + class_.getCanonicalName() + "\\.(.*)"))[1]) })
+        Java.from(class_.getDeclaredFields()).forEach(function (elem) {
+            if (elem.toString().indexOf("field_") == -1)
+                members.push(identifierName + "." + elem.getName())
+            else
+                members.push(identifierName + "." + fields_deob[fields_obf.indexOf(elem.getName())])
+
+        })
+    } catch (e) { }
+
+    try {
+        Java.from(class_.getDeclaredMethods()).forEach(function (elem) {
+            if (elem.toString().indexOf("func_") == -1)
+                members.push(identifierName + "." + elem.getName() + "()")
+            else {
+                chat.print(elem.getName())
+                members.push(identifierName + "." + methods_deob[methods_obf.indexOf(elem.getName())] + "()")
+            }
+        })
     } catch (e) { }
     return members
 }
