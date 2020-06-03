@@ -9,6 +9,7 @@ ClassPath = Java.type("com.google.common.reflect.ClassPath")
 File = Java.type("java.io.File")
 Script = Java.type("net.ccbluex.liquidbounce.script.Script")
 Remapper = Java.type("net.ccbluex.liquidbounce.script.remapper.Remapper")
+GuiChat = Java.type("net.minecraft.client.gui.GuiChat")
 
 var multilineMsg = ""
 var history = []
@@ -17,6 +18,23 @@ var fields_obf = []
 var fields_deob = []
 var methods_obf = []
 var methods_deob = []
+
+
+onEnables = []
+onDisables = []
+onUpdates = []
+onMotions = []
+onRender2Ds = []
+onRender3Ds = []
+onAttacks = []
+onJumps = []
+onPackets = []
+onKeys = []
+onMoves = []
+onSteps = []
+onStepConfirms = []
+onWorlds = []
+onSessions = []
 
 module =
 {
@@ -72,10 +90,15 @@ module =
             }
 
         })
+
+        onEnables.forEach(function (e) { e() })
     },
 
 
-    onDisable: function () { chat.print("§6[nashorn REPL]: Quiting REPL") },
+    onDisable: function () {
+        chat.print("§6[nashorn REPL]: Quiting REPL")
+        onDisables.forEach(function (e) { e() })
+    },
 
     onPacket: function (event) {
         var packet = event.getPacket()
@@ -83,7 +106,33 @@ module =
             repl(event, packet)
         else if (packet instanceof C14PacketTabComplete)
             makeCompletion(event, packet)
-    }
+
+        onPackets.forEach(function (e) { e(event) })
+    },
+
+    onUpdate: function () { onUpdates.forEach(function (e) { e() }) },
+    onMotion: function (a) { onMotions.forEach(function (e) { e(a) }) },
+    onRender2D: function (a) {
+        onRender2Ds.forEach(function (e) { e(a) })
+
+        guiChat = mc.currentScreen
+        if (guiChat instanceof GuiChat) {
+
+            fieldInputField = guiChat.class.getDeclaredField("field_146415_a") // Hack Hack Hack
+            fieldInputField.setAccessible(true)
+            inputField = fieldInputField.get(guiChat)
+
+            inputField.setMaxStringLength(200)
+        }
+    },
+    onRender3D: function (a) { onRender3Ds.forEach(function (e) { e(a) }) },
+    onAttack: function (a) { onAttacks.forEach(function (e) { e(a) }) },
+    onJump: function (a) { onJumps.forEach(function (e) { e(a) }) },
+    onKey: function (a) { onKeys.forEach(function (e) { e(a) }) },
+    onStep: function (a) { onSteps.forEach(function (e) { e(a) }) },
+    onStepConfirm: function (a) { onStepConfirms.forEach(function (e) { e(a) }) },
+    onWorld: function (a) { onWorlds.forEach(function (e) { e(a) }) },
+    onSession: function () { onSessions.forEach(function (e) { e() }) }
 }
 
 var semanticSegment = /(\b(\w*?\.)*)(\w*)(?!.*(?:\w*?\.))/
@@ -102,6 +151,11 @@ function makeCompletion(event, packet) {
         fieldWaitOnAutoCompletion = guiChat.class.getDeclaredField("field_146414_r") // Hack Hack Hack
         fieldWaitOnAutoCompletion.setAccessible(true)
         fieldWaitOnAutoCompletion.set(guiChat, true)
+
+        fieldInputField = guiChat.class.getDeclaredField("field_146415_a") // Hack Hack Hack
+        fieldInputField.setAccessible(true)
+        inputField = fieldInputField.get(guiChat)
+
 
         if (messagestr.match(semanticSegment)) {
             var pre = messagestr.match(semanticSegment)[1]
@@ -162,10 +216,6 @@ function makeCompletion(event, packet) {
                 chat.print("§6[nashorn REPL]: automatically imported: §7" + statement)
                 history.push(statement)
                 eval(statement)
-
-                fieldInputField = guiChat.class.getDeclaredField("field_146415_a") // Hack Hack Hack
-                fieldInputField.setAccessible(true)
-                inputField = fieldInputField.get(guiChat)
 
                 chat.print("inputField" + inputField)
 
