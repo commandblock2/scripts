@@ -48,7 +48,10 @@ module =
             prefix = value.createText("Prefix", ">"),
 
             recordHistory = value.createBoolean("History", true),
-            keywordsInCompletion = value.createBoolean("keywordsInCompletion", true)
+            keywordsInCompletion = value.createBoolean("keywordsInCompletion", true),
+
+            limitPrompt = value.createBoolean("LimitPrompt", true),
+            promptLimit = value.createInteger("PromptLimit", 0, 30, 100)
         ],
 
 
@@ -91,13 +94,13 @@ module =
 
         })
 
-        onEnables.forEach(function (e) { e() })
+        onEnables.forEach(function (e) { invoke(e, []) })
     },
 
 
     onDisable: function () {
         chat.print("§6[nashorn REPL]: Quiting REPL")
-        onDisables.forEach(function (e) { e() })
+        onDisables.forEach(function (e) { invoke(e, []) })
     },
 
     onPacket: function (event) {
@@ -110,10 +113,10 @@ module =
         onPackets.forEach(function (e) { e(event) })
     },
 
-    onUpdate: function () { onUpdates.forEach(function (e) { e() }) },
-    onMotion: function (a) { onMotions.forEach(function (e) { e(a) }) },
+    onUpdate: function () { onUpdates.forEach(function (e) { invoke(e, []) }) },
+    onMotion: function (a) { onMotions.forEach(function (e) { invoke(e, [a]) }) },
     onRender2D: function (a) {
-        onRender2Ds.forEach(function (e) { e(a) })
+        onRender2Ds.forEach(function (e) { invoke(e, [a]) })
 
         guiChat = mc.currentScreen
         if (guiChat instanceof GuiChat) {
@@ -125,17 +128,39 @@ module =
             inputField.setMaxStringLength(200)
         }
     },
-    onRender3D: function (a) { onRender3Ds.forEach(function (e) { e(a) }) },
-    onAttack: function (a) { onAttacks.forEach(function (e) { e(a) }) },
-    onJump: function (a) { onJumps.forEach(function (e) { e(a) }) },
-    onKey: function (a) { onKeys.forEach(function (e) { e(a) }) },
-    onStep: function (a) { onSteps.forEach(function (e) { e(a) }) },
-    onStepConfirm: function (a) { onStepConfirms.forEach(function (e) { e(a) }) },
-    onWorld: function (a) { onWorlds.forEach(function (e) { e(a) }) },
-    onSession: function () { onSessions.forEach(function (e) { e() }) }
+    onRender3D: function (a) { onRender3Ds.forEach(function (e) { invoke(e, [a]) }) },
+    onAttack: function (a) { onAttacks.forEach(function (e) { invoke(e, [a]) }) },
+    onJump: function (a) { onJumps.forEach(function (e) { invoke(e, [a]) }) },
+    onKey: function (a) { onKeys.forEach(function (e) { invoke(e, [a]) }) },
+    onStep: function (a) { onSteps.forEach(function (e) { invoke(e, [a]) }) },
+    onStepConfirm: function (a) { onStepConfirms.forEach(function (e) { invoke(e, [a]) }) },
+    onWorld: function (a) { onWorlds.forEach(function (e) { invoke(e, [a]) }) },
+    onSession: function () { onSessions.forEach(function (e) { invoke(e, []) }) }
 }
 
 var semanticSegment = /(\b(\w*?\.)*)(\w*)(?!.+(?:\w*?\.))/
+
+function invoke(func_, paramPack) {
+    try {
+        evaled = func_.apply(paramPack)
+        chat.print("§6[nashorn REPL]: §7" + evaled)
+        return evaled
+    } catch (error) {
+        chat.print("§6[nashorn REPL]: §c" + error)
+    }
+}
+
+function exec_(string) {
+    try {
+
+        evaluated = eval(string)
+        chat.print("§6[nashorn REPL]: §7" + evaluated)
+        return true
+    } catch (error) {
+        chat.print("§6[nashorn REPL]: §c" + error)
+        return false
+    }
+}
 
 function makeCompletion(event, packet) {
 
@@ -240,10 +265,9 @@ function makeCompletion(event, packet) {
 
         prefixMatchedOnlyCompletion = prefixMatchedOnlyCompletion.filter(function (elem) { return elem.startsWith(messagestr) })
         completion = prefixMatchedOnlyCompletion.concat(completion)
-        completion.sort(function (lhs,rhs) 
-        {
+        completion.sort(function (lhs, rhs) {
             lIndex = lhs.lastIndexOf(post)
-            rIndex = rhs.lastIndexOf(post) 
+            rIndex = rhs.lastIndexOf(post)
 
             lIndex = (lIndex == -1 ? 80 : lIndex)
             rIndex = (rIndex == -1 ? 80 : rIndex)
@@ -253,6 +277,8 @@ function makeCompletion(event, packet) {
 
         final = []
         completion.forEach(function (elem) { final.push(none_eval_pre + elem + none_eval_post) })
+        if (limitPrompt.get())
+            final = final.slice(0, promptLimit.get())
         guiChat.onAutocompleteResponse(final)
     }
 }
@@ -274,23 +300,19 @@ function repl(event, packet) {
             event.cancelEvent()
             return
         }
-        else
-            try {
-                if (multilineMsg.length == 0)
-                    multilineMsg = statement
-                else
-                    multilineMsg += statement
+        else {
+            if (multilineMsg.length == 0)
+                multilineMsg = statement
+            else
+                multilineMsg += statement
 
-                if (recordHistory.get())
-                    history.push(statement)
+            if (recordHistory.get())
+                history.push(statement)
 
-                evaluated = eval(multilineMsg)
-                chat.print("§6[nashorn REPL]: §7" + evaluated)
-            } catch (error) {
-                chat.print("§6[nashorn REPL]: §c" + error)
-            } finally {
-                multilineMsg = ""
-            }
+            exec_(multilineMsg)
+
+            multilineMsg = ""
+        }
 
         event.cancelEvent()
     }
