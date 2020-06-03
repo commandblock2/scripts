@@ -44,11 +44,11 @@ module =
     category: "Misc",
     values:
         [
-            usePrefix = value.createBoolean("UsePrefix", false),
+            usePrefix = value.createBoolean("UsePrefix", true),
             prefix = value.createText("Prefix", ">"),
 
             recordHistory = value.createBoolean("History", true),
-            keywordsInCompletion = value.createBoolean("keywordsInCompletion", false)
+            keywordsInCompletion = value.createBoolean("keywordsInCompletion", true)
         ],
 
 
@@ -135,7 +135,7 @@ module =
     onSession: function () { onSessions.forEach(function (e) { e() }) }
 }
 
-var semanticSegment = /(\b(\w*?\.)*)(\w*)(?!.*(?:\w*?\.))/
+var semanticSegment = /(\b(\w*?\.)*)(\w*)(?!.+(?:\w*?\.))/
 
 function makeCompletion(event, packet) {
 
@@ -157,14 +157,17 @@ function makeCompletion(event, packet) {
         inputField = fieldInputField.get(guiChat)
 
 
-        if (messagestr.match(semanticSegment)) {
-            var pre = messagestr.match(semanticSegment)[1]
-            var post = messagestr.match(semanticSegment)[3]
+        match_ = messagestr.match(semanticSegment)
 
-            /*if (pre == "")
-                try {
-                    pre = eval(post).toString().match(semanticSegment)[1]
-                } catch (error) { }*/
+        if (match_) {
+            var pre = match_[1]
+            var post = match_[3]
+
+            startIndex = messagestr.lastIndexOf(match_[0])
+            var none_eval_pre = messagestr.substring(0, startIndex)
+
+            endIndex = startIndex + match_[0].length
+            var none_eval_post = messagestr.substring(endIndex, messagestr.length)
 
         }
 
@@ -181,7 +184,7 @@ function makeCompletion(event, packet) {
                 classpath = ClassPath.from(Thread.currentThread().getContextClassLoader())
                 Java.from(classpath.getTopLevelClasses(evaled_pre)).forEach(
                     function (elem) {
-                        completion.push(usePrefix.get() ? prefix.get() + elem : elem)
+                        completion.push(elem)
                     }
                 )
 
@@ -193,7 +196,7 @@ function makeCompletion(event, packet) {
                             if (package_.startsWith(evaled_pre)) {
                                 partial = package_.match(new RegExp(evaled_pre + "\\.(.*?)\\."))[1]
 
-                                partial = (usePrefix.get() ? prefix.get() : "") + evaled_pre + "." + partial
+                                partial = evaled_pre + "." + partial
 
                                 if (completion.indexOf(partial) == -1)
                                     completion.push(partial)
@@ -217,30 +220,40 @@ function makeCompletion(event, packet) {
                 history.push(statement)
                 eval(statement)
 
-                chat.print("inputField" + inputField)
-
                 textField = inputField.class.getDeclaredField("field_146216_j")
                 textField.setAccessible(true)
-                textField.set(inputField, (usePrefix.get() ? prefix.get() : "") + imported)
+                textField.set(inputField, imported)
 
                 evaled_pre = imported
             }
         } catch (e) { }
 
-        inspect(evaled_pre).forEach(function (elem) { completion.push((usePrefix.get() ? prefix.get() : "") + elem) })
+        inspect(evaled_pre).forEach(function (elem) { completion.push(elem) })
 
         //add js keywords
         !keywordsInCompletion.get() || ["abstract", "arguments", "await", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "debugger", "default", "delete", "do", "double", "else", "enum", "eval", "export", "extends", "false", "final", "finally", "float", "for", "function", "goto", "if", "implements", "in", "instanceof", "int", "interface", "let", "long", "native", "new", "null", "package", "private", "protected", "public", "return", "short", "static", "super", "switch", "synchronized", "this", "throw", "throws", "transient", "true", "try", "typeof", "var", "void", "volatile", "while", "with", "yield"].forEach(
-            function (e) { prefixMatchedOnlyCompletion.push((usePrefix.get() ? prefix.get() : "") + e) }
+            function (e) { prefixMatchedOnlyCompletion.push(e) }
         )
 
         //add all identifiers
-        identifiers.forEach(function (e) { prefixMatchedOnlyCompletion.push((usePrefix.get() ? prefix.get() : "") + e) })
+        identifiers.forEach(function (e) { prefixMatchedOnlyCompletion.push(e) })
 
         prefixMatchedOnlyCompletion = prefixMatchedOnlyCompletion.filter(function (elem) { return elem.startsWith(messagestr) })
         completion = prefixMatchedOnlyCompletion.concat(completion)
-        completion.sort(function (elem) { return (elem.indexOf(post) == -1 ? 1 : -1) })
-        guiChat.onAutocompleteResponse(completion)
+        completion.sort(function (lhs,rhs) 
+        {
+            lIndex = lhs.lastIndexOf(post)
+            rIndex = rhs.lastIndexOf(post) 
+
+            lIndex = (lIndex == -1 ? 80 : lIndex)
+            rIndex = (rIndex == -1 ? 80 : rIndex)
+
+            return lIndex - rIndex
+        })
+
+        final = []
+        completion.forEach(function (elem) { final.push(none_eval_pre + elem + none_eval_post) })
+        guiChat.onAutocompleteResponse(final)
     }
 }
 
@@ -308,27 +321,35 @@ function inspect(identifierName) {
     }
     catch (e) { }
 
+    classes = []
 
-    try {
-        Java.from(class_.getDeclaredFields()).forEach(function (elem) {
-            if (elem.toString().indexOf("field_") == -1)
-                members.push(identifierName + "." + elem.getName())
-            else
-                members.push(identifierName + "." + fields_deob[fields_obf.indexOf(elem.getName())])
+    do {
+        classes.push(class_)
+        class_ = class_.getSuperclass()
+    }
+    while (class_.getName() != "java.lang.Object")
 
-        })
-    } catch (e) { }
+    classes.forEach(function (e) {
+        try {
+            Java.from(e.getDeclaredFields()).forEach(function (elem) {
+                if (elem.toString().indexOf("field_") == -1)
+                    members.push(identifierName + "." + elem.getName())
+                else
+                    members.push(identifierName + "." + fields_deob[fields_obf.indexOf(elem.getName())])
 
-    try {
-        Java.from(class_.getDeclaredMethods()).forEach(function (elem) {
-            if (elem.toString().indexOf("func_") == -1)
-                members.push(identifierName + "." + elem.getName() + "()")
-            else {
-                chat.print(elem.getName())
-                members.push(identifierName + "." + methods_deob[methods_obf.indexOf(elem.getName())] + "()")
-            }
-        })
-    } catch (e) { }
+            })
+        } catch (e) { }
+
+        try {
+            Java.from(e.getDeclaredMethods()).forEach(function (elem) {
+                if (elem.toString().indexOf("func_") == -1)
+                    members.push(identifierName + "." + elem.getName() + "()")
+                else {
+                    members.push(identifierName + "." + methods_deob[methods_obf.indexOf(elem.getName())] + "()")
+                }
+            })
+        } catch (e) { }
+    })
     return members
 }
 
