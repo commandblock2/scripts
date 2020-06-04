@@ -51,7 +51,7 @@ module =
             keywordsInCompletion = value.createBoolean("keywordsInCompletion", true),
 
             limitPrompt = value.createBoolean("LimitPrompt", true),
-            promptLimit = value.createInteger("PromptLimit", 0, 30, 100)
+            promptLimit = value.createInteger("PromptLimit", 30, 0, 100)
         ],
 
 
@@ -181,6 +181,9 @@ function makeCompletion(event, packet) {
         fieldInputField.setAccessible(true)
         inputField = fieldInputField.get(guiChat)
 
+        textField = inputField.class.getDeclaredField("field_146216_j")
+        textField.setAccessible(true)
+
 
         match_ = messagestr.match(semanticSegment)
 
@@ -188,11 +191,11 @@ function makeCompletion(event, packet) {
             var pre = match_[1]
             var post = match_[3]
 
-            startIndex = messagestr.lastIndexOf(match_[0])
-            var none_eval_pre = messagestr.substring(0, startIndex)
+            startIndex = semanticSegment.exec(messagestr).index
+            var noneEvalPre = messagestr.substring(0, startIndex)
 
             endIndex = startIndex + match_[0].length
-            var none_eval_post = messagestr.substring(endIndex, messagestr.length)
+            var noneEvalPost = messagestr.substring(endIndex, messagestr.length)
 
         }
 
@@ -245,8 +248,6 @@ function makeCompletion(event, packet) {
                 history.push(statement)
                 eval(statement)
 
-                textField = inputField.class.getDeclaredField("field_146216_j")
-                textField.setAccessible(true)
                 textField.set(inputField, imported)
 
                 evaled_pre = imported
@@ -276,9 +277,12 @@ function makeCompletion(event, packet) {
         })
 
         final = []
-        completion.forEach(function (elem) { final.push(none_eval_pre + elem + none_eval_post) })
+        completion.forEach(function (elem) { final.push(noneEvalPre + elem + noneEvalPost)})
         if (limitPrompt.get())
             final = final.slice(0, promptLimit.get())
+
+        textField.set(inputField, "")
+
         guiChat.onAutocompleteResponse(final)
     }
 }
@@ -345,11 +349,13 @@ function inspect(identifierName) {
 
     classes = []
 
-    do {
-        classes.push(class_)
-        class_ = class_.getSuperclass()
-    }
-    while (class_.getName() != "java.lang.Object")
+    try {
+        do {
+            classes.push(class_)
+            class_ = class_.getSuperclass()
+        }
+        while (class_.getName() != "java.lang.Object")
+    } catch (e) { }
 
     classes.forEach(function (e) {
         try {
