@@ -281,7 +281,7 @@ function makeCompletion(event, packet) {
         if (limitPrompt.get())
             final = final.slice(0, promptLimit.get())
 
-        textField.set(inputField, "")
+        final.size != 0 || textField.set(inputField, "")
 
         guiChat.onAutocompleteResponse(final)
     }
