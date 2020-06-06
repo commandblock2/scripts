@@ -142,7 +142,7 @@ var semanticSegment = /(\b(\w*?\.)*)(\w*)(?!.+(?:\w*?\.))/
 
 function invoke(func_, paramPack) {
     try {
-        evaled = func_.apply(paramPack)
+        evaled = func_.apply(null, paramPack)
         chat.print("§6[nashorn REPL]: §7" + evaled)
         return evaled
     } catch (error) {
