@@ -2,7 +2,7 @@
 RotationUtils = Java.type("net.ccbluex.liquidbounce.utils.RotationUtils")
 PlayerExtension = Java.type("net.ccbluex.liquidbounce.utils.extensions.PlayerExtensionKt")
 Class = Java.type("java.lang.Class")
-
+Keyboard = Java.type("org.lwjgl.input.Keyboard")
 
 var countDownClicks = 5
 
@@ -20,7 +20,7 @@ var forEach = Array.prototype.forEach;
 module =
 {
     name: "WTAPbot",
-    description: "Bot that uses WTAP(mostly legit), left click 5 times to start(facing the same target), right click to stop",
+    description: "Bot that uses WTAP(mostly legit), left click 5 times to start",
     author: "commandblock2",
     category: "combat",
     values:
@@ -28,9 +28,10 @@ module =
             captureRange = value.createFloat("CaptureRange", 10, 0, 30),
             //hurtTime = value.createInteger("Hurttime", 10, 0, 10),
             //distanceMinus = value.createFloat("DistanceMinus", 0.2, 0, 1),
-            slowDownFrames = value.createInteger("SlowDownFrames",10,0,60),
+            slowDownFrames = value.createInteger("SlowDownFrames", 6, 5, 60),
             block = value.createBoolean("Block", true),
             sneak = value.createBoolean("Sneak", false),
+            stopKey = value.createText("StopKey","P"),
             noBack = value.createBoolean("No S-Tap", false)
         ],
 
@@ -52,7 +53,7 @@ module =
                 sprint = stage == slowDownFrames.get() ? /*PlayerExtension.getDistanceToEntityBox(mc.thePlayer, target) > maxDistance - distanceMinus.get()*/true : false
 
                 mc.gameSettings.keyBindForward.pressed = sprint
-                if(sprint && mc.thePlayer.movementInput.moveForward >= 0.8)
+                if (sprint && mc.thePlayer.movementInput.moveForward >= 0.8 && !mc.gameSettings.keyBindUseItem.pressed)
                     mc.thePlayer.setSprinting(true)
                 else
                     mc.thePlayer.setSprinting(false)
@@ -64,6 +65,8 @@ module =
             }
             else {
                 //release
+                stage = slowDownFrames.get()
+                countDown = 5
                 mc.gameSettings.keyBindAttack.pressed = false
                 mc.gameSettings.keyBindBack.pressed = false
                 autoClicker.state = false
@@ -71,6 +74,8 @@ module =
                 block.get() && (mc.gameSettings.keyBindUseItem.pressed = false);
                 sneak.get() && (mc.gameSettings.keyBindSneak.pressed = false);
                 noBack.get() || (mc.gameSettings.keyBindBack.pressed = false);
+                mc.gameSettings.keyBindForward.pressed = false;
+                continue_ = true
             }
         }
     },
@@ -86,6 +91,11 @@ module =
 
     onAttack: function (e) {
         stage = 0
+    },
+
+    onKey: function(e){
+        if (e.getKey() == eval("Keyboard.KEY_" + stopKey.get().toUpperCase()))
+            continue_ = false
     },
 
 
