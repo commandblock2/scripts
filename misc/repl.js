@@ -191,11 +191,14 @@ function makeCompletion(event, packet) {
             var pre = match_[1]
             var post = match_[3]
 
+            try
+            {
             startIndex = semanticSegment.exec(messagestr).index
             var noneEvalPre = messagestr.substring(0, startIndex)
 
             endIndex = startIndex + match_[0].length
             var noneEvalPost = messagestr.substring(endIndex, messagestr.length)
+            } catch(e) {}
 
         }
 
