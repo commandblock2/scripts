@@ -252,7 +252,7 @@ function makeCompletion(event, packet) {
 
                 evaled_pre = imported
             }
-        } catch (e) { }
+        } catch (e) {}
 
         inspect(evaled_pre).forEach(function (elem) { completion.push(elem) })
 
@@ -267,6 +267,9 @@ function makeCompletion(event, packet) {
         prefixMatchedOnlyCompletion = prefixMatchedOnlyCompletion.filter(function (elem) { return elem.startsWith(messagestr) })
         completion = prefixMatchedOnlyCompletion.concat(completion)
         completion.sort(function (lhs, rhs) {
+            try
+            {
+
             lIndex = lhs.lastIndexOf(post)
             rIndex = rhs.lastIndexOf(post)
 
@@ -274,6 +277,7 @@ function makeCompletion(event, packet) {
             rIndex = (rIndex == -1 ? 80 : rIndex)
 
             return lIndex - rIndex
+            } catch(e) {return 80}
         })
 
         final = []
