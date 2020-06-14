@@ -46,17 +46,14 @@ module =
 
         if (countDown == 0) {
             //main loop
-            if (target && (PlayerExtension.getDistanceToEntityBox(mc.thePlayer, target) < maxDistance + captureRange.get()) && continue_) {
+            mc.gameSettings.keyBindSprint.pressed = true
+            if (mc.theWorld.loadedEntityList.indexOf(target) != -1 && (PlayerExtension.getDistanceToEntityBox(mc.thePlayer, target) < maxDistance + captureRange.get()) && continue_) {
 
                 aim()
 
-                sprint = stage == slowDownFrames.get() ? /*PlayerExtension.getDistanceToEntityBox(mc.thePlayer, target) > maxDistance - distanceMinus.get()*/true : false
+                foward = stage == slowDownFrames.get() ? true : false
 
-                mc.gameSettings.keyBindForward.pressed = sprint
-                if (sprint && mc.thePlayer.movementInput.moveForward >= 0.8 && !mc.gameSettings.keyBindUseItem.pressed)
-                    mc.thePlayer.setSprinting(true)
-                else
-                    mc.thePlayer.setSprinting(false)
+                mc.gameSettings.keyBindForward.pressed = foward
 
                 resetSprintState()
 
@@ -65,6 +62,7 @@ module =
             }
             else {
                 //release
+                mc.gameSettings.keyBindSprint.pressed = false
                 stage = slowDownFrames.get()
                 countDown = 5
                 mc.gameSettings.keyBindAttack.pressed = false
