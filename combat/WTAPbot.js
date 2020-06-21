@@ -7,6 +7,7 @@ Keyboard = Java.type("org.lwjgl.input.Keyboard")
 var countDownClicks = 5
 
 var target = null
+var targetPrevPoss = []
 var lasttarget = null
 var isEnemy
 var countDown = countDownClicks
@@ -14,6 +15,7 @@ var stage = 0
 
 var lastFrameLeftDown = false
 var continue_ = true
+
 
 var forEach = Array.prototype.forEach;
 
@@ -31,8 +33,9 @@ module =
             slowDownFrames = value.createInteger("SlowDownFrames", 6, 5, 60),
             block = value.createBoolean("Block", true),
             sneak = value.createBoolean("Sneak", false),
-            stopKey = value.createText("StopKey","P"),
-            noBack = value.createBoolean("No S-Tap", false)
+            stopKey = value.createText("StopKey", "Z"),
+            noBack = value.createBoolean("No S-Tap", true),
+            aimMode = value.createList("AimMode", ["Predictive", "Face", "LegitLike"], "Predictive")
         ],
 
     onRender3D: function () {
@@ -42,12 +45,10 @@ module =
             onLeftClick()
         lastFrameLeftDown = thisFrameLeftDown
 
-        var maxDistance = reach.state ? reach.getValue("CombatReach").get() : 3.0
-
         if (countDown == 0) {
             //main loop
             mc.gameSettings.keyBindSprint.pressed = true
-            if (mc.theWorld.loadedEntityList.indexOf(target) != -1 && (PlayerExtension.getDistanceToEntityBox(mc.thePlayer, target) < maxDistance + captureRange.get()) && continue_) {
+            if (mc.theWorld.loadedEntityList.indexOf(target) != -1 && (PlayerExtension.getDistanceToEntityBox(mc.thePlayer, target) < getMaxDistance() + captureRange.get()) && continue_) {
 
                 aim()
 
@@ -84,18 +85,23 @@ module =
     },
 
     onUpdate: function () {
+        if (target)
+            targetPrevPoss.push(target.getPositionVector())
+        else
+            targetPrevPoss = []
 
+        if (targetPrevPoss.length > 10)
+            targetPrevPoss.shift()
     },
 
     onAttack: function (e) {
         stage = 0
     },
 
-    onKey: function(e){
+    onKey: function (e) {
         if (e.getKey() == eval("Keyboard.KEY_" + stopKey.get().toUpperCase()))
             continue_ = false
     },
-
 
     onDisable: function () { }
 }
@@ -118,7 +124,27 @@ function resetSprintState() {
 function aim() {
     autoClicker.state = true
     mc.gameSettings.keyBindAttack.pressed = true
-    RotationUtils.searchCenter(target.getEntityBoundingBox(), false, false, false, true).rotation.toPlayer(mc.thePlayer)
+
+    targetPrevPoss[targetPrevPoss.length - 1] = target.getPositionVector()
+
+    index = Math.floor(targetPrevPoss.length * (1 - Math.max(Math.min(PlayerExtension.getDistanceToEntityBox(mc.thePlayer, target) / getMaxDistance() - 1, 1), 0.01)))
+    vecTarget = targetPrevPoss[index]
+
+    x_offset = vecTarget.xCoord - target.posX; y_offset = vecTarget.yCoord - target.posY; z_offset = vecTarget.zCoord - target.posZ;
+
+    if(aimMode.get() == "Face"){
+        x_offset = y_offset = z_offset = 0;
+    }
+    else if(aimMode.get() == "Predictive"){
+        x_offset = -x_offset; y_offset = -y_offset; z_offset = -z_offset
+    }
+
+
+    RotationUtils.searchCenter(target.getEntityBoundingBox().offset(x_offset, y_offset, z_offset), false, false, false, true).rotation.toPlayer(mc.thePlayer)
+}
+
+function getMaxDistance() {
+    return reach.state ? reach.getValue("CombatReach").get() : 3.0
 }
 
 function onLeftClick() {
@@ -129,8 +155,7 @@ function onLeftClick() {
     forEach.call(entities, function (elem) {
         diff = RotationUtils.getRotationDifference(elem)
 
-        var maxDistance = reach.state ? reach.getValue("CombatReach").get() : 3.0
-        if (PlayerExtension.getDistanceToEntityBox(mc.thePlayer, elem) > maxDistance + captureRange.get())
+        if (PlayerExtension.getDistanceToEntityBox(mc.thePlayer, elem) > getMaxDistance() + captureRange.get())
             return
 
         if (elem == mc.thePlayer || !isEnemy.invoke(killAura, elem))
