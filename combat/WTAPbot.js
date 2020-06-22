@@ -48,7 +48,7 @@ module =
         if (countDown == 0) {
             //main loop
             mc.gameSettings.keyBindSprint.pressed = true
-            if (mc.theWorld.loadedEntityList.indexOf(target) != -1 && (PlayerExtension.getDistanceToEntityBox(mc.thePlayer, target) < getMaxDistance() + captureRange.get()) && continue_) {
+            if (mc.theWorld.loadedEntityList.indexOf(target) != -1 && (PlayerExtension.getDistanceToEntityBox(mc.thePlayer, target) < getMaxDistance() + captureRange.get()) && continue_ && !mc.thePlayer.isDead) {
 
                 aim()
 
@@ -140,7 +140,7 @@ function aim() {
     }
 
 
-    RotationUtils.searchCenter(target.getEntityBoundingBox().offset(x_offset, y_offset, z_offset), false, false, false, true).rotation.toPlayer(mc.thePlayer)
+    RotationUtils.searchCenter(target.getEntityBoundingBox().offset(x_offset, y_offset, z_offset), false, false, false, true, 300).rotation.toPlayer(mc.thePlayer)
 }
 
 function getMaxDistance() {
