@@ -7,7 +7,7 @@ module =
 {
     name: "AutoGapple",
     description: "Eat gapple when your health is low",
-    author: "commandblock2",
+    author: "lolMC, commandblock2",
     category: "combat",
     values:
         [
