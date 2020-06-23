@@ -1,3 +1,5 @@
+
+//Copyright 2020 commandblock2 distributed under AGPL-3.0-or-later
 GuiInventory = Java.type("net.minecraft.client.gui.inventory.GuiInventory")
 Potion = Java.type('net.minecraft.potion.Potion')
 
