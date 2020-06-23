@@ -1,8 +1,6 @@
 GuiInventory = Java.type("net.minecraft.client.gui.inventory.GuiInventory")
 Potion = Java.type('net.minecraft.potion.Potion')
 
-
-var appleCount = null
 var originalIndex = null
 var inventoryIndex = null
 module =
@@ -22,7 +20,7 @@ module =
             gAppleIndex = InventoryUtils.findItem(36, 45, Items.golden_apple)
             gAppleIndex = gAppleIndex == -1 ? InventoryUtils.findItem(9, 36, Items.golden_apple) : gAppleIndex
 
-            if (originalIndex == null) { // wtffffff
+            if (originalIndex == null) { // wtffffff have to check null because if (originalIndex) doesn't work when it equas to 0
                 originalIndex = mc.thePlayer.inventory.currentItem
             }
 
@@ -35,22 +33,10 @@ module =
                 //switch gapple and 36 (first slot)
                 inventoryIndex = gAppleIndex
                 switchGapple(inventoryIndex)
-            } else
+            }
 
-                try {
-                    currentApples = mc.thePlayer.inventoryContainer
-                        .getSlot(gAppleIndex).getStack().stackSize
-
-                    if (appleCount == 0) {
-                        appleCount = currentApples
-                    } else {
-                        if (appleCount == currentApples)
-                            mc.gameSettings.keyBindUseItem.pressed = true
-                        else {
-                            reset()
-                        }
-                    }
-                } catch (e) { chat.print(e) }
+            mc.gameSettings.keyBindUseItem.pressed = true
+            
         }
         else {
             reset()
@@ -58,7 +44,6 @@ module =
     }
 }
 function reset() {
-    appleCount = 0
     mc.gameSettings.keyBindUseItem.pressed = false
     if (originalIndex != null) {
         mc.thePlayer.inventory.currentItem = originalIndex;
