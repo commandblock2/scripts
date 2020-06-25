@@ -1,4 +1,3 @@
-
 //Copyright 2020 commandblock2 distributed under AGPL-3.0-or-later
 GuiInventory = Java.type("net.minecraft.client.gui.inventory.GuiInventory")
 Potion = Java.type('net.minecraft.potion.Potion')
@@ -9,7 +8,7 @@ module =
 {
     name: "AutoGapple",
     description: "Eat gapple when your health is low",
-    author: "LolMC, commandblock2",
+    author: "commandblock2",
     category: "combat",
     values:
         [
@@ -38,7 +37,7 @@ module =
             }
 
             mc.gameSettings.keyBindUseItem.pressed = true
-            
+
         }
         else {
             reset()
@@ -46,8 +45,7 @@ module =
     }
 }
 function reset() {
-    mc.gameSettings.keyBindUseItem.pressed = false
-    if (originalIndex != null) {
+    if (originalIndex != null ) {
         mc.thePlayer.inventory.currentItem = originalIndex;
         originalIndex = null
     }
@@ -56,6 +54,8 @@ function reset() {
         switchGapple(inventoryIndex)
         inventoryIndex = null
     }
+    
+    mc.gameSettings.keyBindUseItem.pressed = false
 }
 
 function switchGapple(index) {
