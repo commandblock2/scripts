@@ -45,6 +45,9 @@ module =
     }
 }
 function reset() {
+    if (originalIndex != null || inventoryIndex != null)
+        mc.gameSettings.keyBindUseItem.pressed = false
+
     if (originalIndex != null ) {
         mc.thePlayer.inventory.currentItem = originalIndex;
         originalIndex = null
@@ -54,8 +57,7 @@ function reset() {
         switchGapple(inventoryIndex)
         inventoryIndex = null
     }
-    
-    mc.gameSettings.keyBindUseItem.pressed = false
+
 }
 
 function switchGapple(index) {
