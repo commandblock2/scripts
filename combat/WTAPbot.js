@@ -3,6 +3,7 @@ RotationUtils = Java.type("net.ccbluex.liquidbounce.utils.RotationUtils")
 PlayerExtension = Java.type("net.ccbluex.liquidbounce.utils.extensions.PlayerExtensionKt")
 Class = Java.type("java.lang.Class")
 Keyboard = Java.type("org.lwjgl.input.Keyboard")
+MSTimer = Java.type("net.ccbluex.liquidbounce.utils.timer.MSTimer")
 
 var countDownClicks = 5
 
@@ -11,11 +12,11 @@ var targetPrevPoss = []
 var lasttarget = null
 var isEnemy
 var countDown = countDownClicks
-var stage = 0
 
 var lastFrameLeftDown = false
 var continue_ = true
 
+var timer = new MSTimer()
 
 var forEach = Array.prototype.forEach;
 
@@ -28,9 +29,9 @@ module =
     values:
         [
             captureRange = value.createFloat("CaptureRange", 10, 0, 30),
-            //hurtTime = value.createInteger("Hurttime", 10, 0, 10),
+            hurtTime = value.createInteger("Hurttime", 0, 0, 10),
             //distanceMinus = value.createFloat("DistanceMinus", 0.2, 0, 1),
-            slowDownFrames = value.createInteger("SlowDownFrames", 6, 5, 60),
+            slowDownDelay = value.createInteger("SlowDownDelay", 120, 0, 5000),
             block = value.createBoolean("Block", true),
             sneak = value.createBoolean("Sneak", false),
             stopKey = value.createText("StopKey", "Z"),
@@ -50,21 +51,14 @@ module =
             mc.gameSettings.keyBindSprint.pressed = true
             if (mc.theWorld.loadedEntityList.indexOf(target) != -1 && (PlayerExtension.getDistanceToEntityBox(mc.thePlayer, target) < getMaxDistance() + captureRange.get()) && continue_ && !mc.thePlayer.isDead) {
 
-                aim()
+                aim()    
 
-                foward = stage == slowDownFrames.get() ? true : false
+                setSprintState()
 
-                mc.gameSettings.keyBindForward.pressed = foward
-
-                resetSprintState()
-
-                if (stage < slowDownFrames.get())
-                    stage++
             }
             else {
                 //release
                 mc.gameSettings.keyBindSprint.pressed = false
-                stage = slowDownFrames.get()
                 countDown = 5
                 mc.gameSettings.keyBindAttack.pressed = false
                 mc.gameSettings.keyBindBack.pressed = false
@@ -95,7 +89,8 @@ module =
     },
 
     onAttack: function (e) {
-        stage = 0
+        if(e.getTargetEntity().hurtTime <= hurtTime.get())
+            timer.reset()
     },
 
     onKey: function (e) {
@@ -106,16 +101,21 @@ module =
     onDisable: function () { }
 }
 
-function resetSprintState() {
-    if (stage == slowDownFrames.get()) {
+function setSprintState() {
+
+    delay = slowDownDelay.get()
+
+    if (timer.hasTimePassed(delay)) {
         block.get() && (mc.gameSettings.keyBindUseItem.pressed = false);
         sneak.get() && (mc.gameSettings.keyBindSneak.pressed = false);
         noBack.get() || (mc.gameSettings.keyBindBack.pressed = false);
+        mc.gameSettings.keyBindForward.pressed = true
     }
     else {
         block.get() && (mc.gameSettings.keyBindUseItem.pressed = true);
         sneak.get() && (mc.gameSettings.keyBindSneak.pressed = true);
         noBack.get() || (mc.gameSettings.keyBindBack.pressed = true);
+        mc.gameSettings.keyBindForward.pressed = false
     }
 
     prevSprintState = comboSprint
