@@ -10,7 +10,8 @@ module = {
     category: "world",
 
     values: [
-        delay = value.createInteger("Delay", 200, 0, 1000),
+        delay = value.createInteger("Delay", 120, 0, 1000),
+        sneakDelay = value.createInteger("SneakDelay", 200, 0, 2000),
         searchRange = value.createInteger("SearchRange", 5, 0, 20)
     ],
 
@@ -21,6 +22,7 @@ module = {
                 startTimeOut = timeout(delay.get(), function () {
                     on = true
                     mc.gameSettings.keyBindUseItem.pressed = true
+                    mc.gameSettings.keyBindForward.pressed = true
                 })
         } else {
             on = false
@@ -28,11 +30,20 @@ module = {
                 startTimeOut.cancel()
                 startTimeOut = null
                 mc.gameSettings.keyBindUseItem.pressed = false
+
+                mc.gameSettings.keyBindSneak.pressed = true
+
+                timeout(sneakDelay.get(), function () {
+                    mc.gameSettings.keyBindSneak.pressed = false
+                    mc.gameSettings.keyBindForward.pressed = false
+                })
             }
         }
 
 
         if (on) {
+            mc.gameSettings.keyBindUseItem.pressed = true
+            mc.gameSettings.keyBindForward.pressed = true
             aim()
         }
 
