@@ -3,56 +3,102 @@
 var on = false
 var startTimeOut = null
 
-module = {
-    name: "SelfSave",
-    description: "idk",
-    author: "commandblock2",
-    category: "world",
+module = [
+    {
+        name: "SelfSave",
+        description: "idk",
+        author: "commandblock2",
+        category: "world",
 
-    values: [
-        delay = value.createInteger("Delay", 120, 0, 1000),
-        sneakDelay = value.createInteger("SneakDelay", 200, 0, 2000),
-        searchRange = value.createInteger("SearchRange", 5, 0, 20)
-    ],
+        values: [
+            delay = value.createInteger("Delay", 120, 0, 1000),
+            sneakDelay = value.createInteger("SneakDelay", 200, 0, 2000),
+            searchRange = value.createInteger("SearchRange", 5, 0, 20),
+            anyCondition = value.createBoolean("AnyCondition", false),
+            onHit = value.createBoolean("OnHit", true)
+        ],
 
 
-    onRender3D: function () {
-        if (!(mc.thePlayer.onGround || mc.thePlayer.isOnLadder() || mc.thePlayer.isInWater())) {
-            if (!startTimeOut)
-                startTimeOut = timeout(delay.get(), function () {
-                    on = true
-                    mc.gameSettings.keyBindUseItem.pressed = true
-                    mc.gameSettings.keyBindForward.pressed = true
-                })
-        } else {
-            on = false
-            if (startTimeOut) {
-                startTimeOut.cancel()
-                startTimeOut = null
-                mc.gameSettings.keyBindUseItem.pressed = false
-
-                mc.gameSettings.keyBindSneak.pressed = true
-
-                timeout(sneakDelay.get(), function () {
-                    mc.gameSettings.keyBindSneak.pressed = false
-                    mc.gameSettings.keyBindForward.pressed = false
-                })
+        onRender3D: function () {
+            if (anyCondition.get() && !(mc.thePlayer.onGround || mc.thePlayer.isOnLadder() || mc.thePlayer.isInWater())) {
+                selfSaveActivate()
+            } else if ((mc.thePlayer.onGround || mc.thePlayer.isOnLadder() || mc.thePlayer.isInWater())) {
+                selfSaveDeactivate()
             }
+
+
+            if (on) {
+                mc.gameSettings.keyBindUseItem.pressed = true
+                mc.gameSettings.keyBindForward.pressed = true
+                aim()
+            }
+
+        },
+
+        onPacket: function (event) {
+            packet = event.getPacket()
+            if (onHit.get() &&
+                packet instanceof S12PacketEntityVelocity &&
+                mc.theWorld.getEntityByID(packet.getEntityID()) == mc.thePlayer) {
+                timeout(delay.get(), selfSaveActivate)
+            }
+        },
+
+        onDisable: function () {
+            selfSaveDeactivate()
         }
+    },
+    {
+        name: "Telly bridge",
+        description: "telly bridging (not implemented)",
+        author: "commandblock2",
+        category: "world",
+
+        values: [
+
+        ],
+
+        onUpdate: function () {
+            //if motionY < 0 then selfsave
+            //if onGround then restore pitch/yaw
+        }
+    }
+]
 
 
-        if (on) {
+
+function selfSaveActivate() {
+    if (!startTimeOut)
+        startTimeOut = timeout(delay.get(), function () {
+            on = true
             mc.gameSettings.keyBindUseItem.pressed = true
             mc.gameSettings.keyBindForward.pressed = true
-            aim()
-        }
 
-    },
+            index = InventoryUtils.findAutoBlockBlock() - 36
 
-    onDisable: function () {
+            if(index < 0 || index > 9)
+                return
+
+            mc.thePlayer.inventory.currentItem = index //I'll deal with that later(refactor with AutoGapple)
+        })
+}
+
+function selfSaveDeactivate() {
+    on = false
+    if (startTimeOut) {
+        startTimeOut.cancel()
+        startTimeOut = null
         mc.gameSettings.keyBindUseItem.pressed = false
-        autoClicker.state = false
+
+        mc.gameSettings.keyBindSneak.pressed = true
+
+        timeout(sneakDelay.get(), function () {
+            mc.gameSettings.keyBindSneak.pressed = false
+            mc.gameSettings.keyBindForward.pressed = false
+        })
     }
+
+    autoClicker.state = false
 }
 
 function avg(a, b) { return (a + b) / 2 }
