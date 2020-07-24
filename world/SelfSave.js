@@ -3,6 +3,9 @@
 var on = false
 var startTimeOut = null
 
+var rotationYaw = 0
+var rotationPitch = 0
+
 module = [
     {
         name: "SelfSave",
@@ -49,18 +52,45 @@ module = [
         }
     },
     {
-        name: "Telly bridge",
+        name: "Tellybridge",
         description: "telly bridging (not implemented)",
         author: "commandblock2",
         category: "world",
 
         values: [
-
+            triggerMotion = value.createFloat("TriggerMotionY", 0, -0.42, 0.42)
         ],
 
-        onUpdate: function () {
-            //if motionY < 0 then selfsave
-            //if onGround then restore pitch/yaw
+        onRender3D: function () {
+            if (mc.thePlayer.onGround) {
+                if(on){
+                    mc.thePlayer.rotationPitch = rotationPitch
+                    mc.thePlayer.rotationYaw = rotationYaw
+                }
+
+                deactivate()
+
+                mc.gameSettings.keyBindForward.pressed = true
+                mc.gameSettings.keyBindBack.pressed = false
+                mc.gameSettings.keyBindSprint.pressed = true
+
+            } else {
+                if(mc.thePlayer.motionY < triggerMotion.get()){
+                    if(!on){
+                        rotationPitch = mc.thePlayer.rotationPitch
+                        rotationYaw = mc.thePlayer.rotationYaw
+                    }
+                    
+                    aim()
+
+                    activate()  
+                    mc.gameSettings.keyBindUseItem.pressed = true
+                }
+                
+                mc.gameSettings.keyBindForward.pressed = false
+                mc.gameSettings.keyBindBack.pressed = true
+                mc.gameSettings.keyBindSprint.pressed = false
+            }
         }
     }
 ]
@@ -70,17 +100,22 @@ module = [
 function selfSaveActivate() {
     if (!startTimeOut)
         startTimeOut = timeout(delay.get(), function () {
-            on = true
+            activate()
             mc.gameSettings.keyBindUseItem.pressed = true
             mc.gameSettings.keyBindForward.pressed = true
 
             index = InventoryUtils.findAutoBlockBlock() - 36
 
-            if(index < 0 || index > 9)
+            if (index < 0 || index > 9)
                 return
 
             mc.thePlayer.inventory.currentItem = index //I'll deal with that later(refactor with AutoGapple)
         })
+}
+
+function activate()
+{
+    on = true
 }
 
 function selfSaveDeactivate() {
@@ -88,7 +123,8 @@ function selfSaveDeactivate() {
     if (startTimeOut) {
         startTimeOut.cancel()
         startTimeOut = null
-        mc.gameSettings.keyBindUseItem.pressed = false
+ 
+        deactivate()
 
         mc.gameSettings.keyBindSneak.pressed = true
 
@@ -98,7 +134,14 @@ function selfSaveDeactivate() {
         })
     }
 
+    
+}
+
+function deactivate()
+{
+    on = false
     autoClicker.state = false
+    mc.gameSettings.keyBindUseItem.pressed = false
 }
 
 function avg(a, b) { return (a + b) / 2 }
@@ -107,11 +150,11 @@ function toDgree(rad) { return rad * 180 / Math.PI }
 
 function aim() {
     autoClicker.state = true
-    block = getNearstFullBlock(mc.thePlayer.getPositionVector().add(new Vec3(0, -2, 0)), 10)
+    block = getNearstFullBlock(mc.thePlayer.getPositionVector().add(new Vec3(0, -1, 0)), 10)
 
     surfaceCentrals = getCentralPosOf6Surfaces(block)
 
-    targetPos = mc.thePlayer.getPositionVector().add(new Vec3(0, -2, 0))
+    targetPos = mc.thePlayer.getPositionVector().add(new Vec3(0, -1, 0))
     x = targetPos.xCoord; y = targetPos.yCoord; z = targetPos.zCoord;
 
     targetSurfaceCentral = surfaceCentrals[0]
