@@ -30,8 +30,9 @@ module =
         [
             captureRange = value.createFloat("CaptureRange", 10, 0, 30),
             hurtTime = value.createInteger("Hurttime", 0, 0, 10),
-            //distanceMinus = value.createFloat("DistanceMinus", 0.2, 0, 1),
             slowDownDelay = value.createInteger("SlowDownDelay", 120, 0, 5000),
+            distanceToMoreDelay = value.createFloat("DistanceToMoreDelay", 1.5, 0, 2),
+            moreDelayToKeepDistance = value.createFloat("MoreDelayToKeepDistance", 230, 50, 2000),
             block = value.createBoolean("Block", true),
             sneak = value.createBoolean("Sneak", false),
             stopKey = value.createText("StopKey", "Z"),
@@ -104,6 +105,8 @@ module =
 function setSprintState() {
 
     delay = slowDownDelay.get()
+    if(PlayerExtension.getDistanceToEntityBox(mc.thePlayer, target) < getMaxDistance() - distanceToMoreDelay.get())
+        delay += moreDelayToKeepDistance.get()
 
     if (timer.hasTimePassed(delay)) {
         block.get() && (mc.gameSettings.keyBindUseItem.pressed = false);
