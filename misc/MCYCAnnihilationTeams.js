@@ -25,7 +25,7 @@ module = {
     category: "misc",
 
     onEnable: function () {
-        if (mc.theWorld){
+        if (mc.theWorld) {
             scoreBoard = mc.theWorld.getScoreboard()
             try {
                 translation.forEach(function (e) {
@@ -50,14 +50,23 @@ module = {
 
         if (scoreBoard && msTimer.hasTimePassed(5000))
             Java.from(mc.thePlayer.sendQueue.getPlayerInfoMap()).forEach(function (e) {
-                displayName = EntityUtils.getName(e)
-                scoreBoard.addPlayerToTeam(e.getGameProfile().getName(), getColor(displayName))
+                try {
+                    displayName = EntityUtils.getName(e)
+                    scoreBoard.addPlayerToTeam(e.getGameProfile().getName(), getColor(displayName))
 
 
-                teams = LiquidBounce.moduleManager.getModule("Teams")
-                teams.state = true
-                teams.getValue("color").set(false)
+                    teams = LiquidBounce.moduleManager.getModule("Teams")
+                    teams.state = true
+                    teams.getValue("color").set(false)
+                }
+                catch (e) { }
             })
+    },
+
+    onPacket: function(e) {
+        if(e.getPacket() instanceof S3EPacketTeams)
+            e.cancelEvent()
+        //fuck u for spammer that
     }
 }
 
