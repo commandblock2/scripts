@@ -25,8 +25,15 @@ module = {
     category: "misc",
 
     onEnable: function () {
-        if (mc.theWorld)
+        if (mc.theWorld){
             scoreBoard = mc.theWorld.getScoreboard()
+            try {
+                translation.forEach(function (e) {
+                    scoreBoard.createTeam(e[1]).setNameSuffix(e[2])
+                })
+            }
+            catch (e) { }
+        }
     },
 
     onWorld: function (event) {
