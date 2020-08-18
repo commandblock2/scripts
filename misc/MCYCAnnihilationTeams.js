@@ -1,4 +1,11 @@
+///api_version=2
 //Copyright 2020 commandblock2 distributed under AGPL-3.0-or-later
+(script = registerScript({
+    name: "MCYCAnnihilationTeams",
+    version: "1.0",
+    authors: ["commandblock2"]
+})).import("Core.lib")
+
 NetworkPlayerInfo = Java.type("net.minecraft.client.network.NetworkPlayerInfo")
 MSTimer = Java.type("net.ccbluex.liquidbounce.utils.timer.MSTimer")
 
@@ -69,5 +76,3 @@ module = {
         //fuck u for spammer that
     }
 }
-
-script.import("Core.lib")
