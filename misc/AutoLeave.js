@@ -1,4 +1,12 @@
+///api_version=2
 //Copyright 2020 commandblock2 distributed under AGPL-3.0-or-later
+(script = registerScript({
+    name: "YetAnotherAutoLeave",
+    version: "1.0",
+    authors: ["commandblock2"]
+})).import("Core.lib")
+
+
 module =
 {
     name: "YetAnotherAutoLeave",
@@ -26,5 +34,3 @@ function leave() {
     mc.thePlayer.sendChatMessage(message.get())
     moduleManager.getModule("YetAnotherAutoLeave").setState(false)
 }
-
-script.import("Core.lib")
