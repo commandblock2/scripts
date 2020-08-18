@@ -1,4 +1,11 @@
+///api_version=2
 //Copyright 2020 commandblock2 distributed under AGPL-3.0-or-later
+(script = registerScript({
+    name: "ColoredCross",
+    version: "1.0",
+    authors: ["commandblock2"]
+})).import("Core.lib")
+
 ClientUtils = Java.type("net.ccbluex.liquidbounce.utils.ClientUtils");
 PlayerExtension = Java.type("net.ccbluex.liquidbounce.utils.extensions.PlayerExtensionKt");
 GL11 = Java.type("org.lwjgl.opengl.GL11");
@@ -10,7 +17,6 @@ ScaledResolution = Java.type("net.minecraft.client.gui.ScaledResolution")
 module =
 {
     name: "ColoredCross",
-    description: "",
     author: "commandblock2",
     values:
         [
@@ -24,7 +30,7 @@ module =
         var maxDistance = reach.state ? reach.getValue("CombatReach").get() : 3.0
         var distance = 0
 
-        if (mc.objectMouseOver.entityHit != null)
+        if (mc.objectMouseOver && mc.objectMouseOver.entityHit)
             distance = PlayerExtension.getDistanceToEntityBox
                 (mc.thePlayer, mc.objectMouseOver.entityHit).toString();
 
@@ -63,5 +69,3 @@ module =
 }
 
 reach = moduleManager.getModule("Reach");
-
-script.import("Core.lib");
