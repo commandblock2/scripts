@@ -1,4 +1,12 @@
+///api_version=2
 //Copyright 2020 commandblock2 distributed under AGPL-3.0-or-later
+//Part of these are skided from LB, but the license should be compatible
+(script = registerScript({
+    name: "TickPerSecond",
+    version: "1.0",
+    authors: ["commandblock2"]
+})).import("Core.lib")
+
 System = Java.type("java.lang.System")
 
 Tps = 0.0
@@ -11,7 +19,7 @@ module = {
     author: "commandblock2",
     category: "misc",
     values: [
-        duration = value.createFloat("Duration", 10.1, 1, 100),
+        duration = value.createFloat("Duration", 50.1, 1, 100),
         notifyIfAbnormal = value.createBoolean("NotifyIfAbnormal", true)
     ],
 
@@ -25,7 +33,7 @@ module = {
 
             if (count == packetHistory.length)
                 return
-            else {
+            else if (count + 10 < packetHistory.length) {
                 packetHistory.shift()
             }
 
@@ -46,7 +54,7 @@ module = {
             packetHistory.push(System.currentTimeMillis())
     },
 
-    onDisable: function () { Tps = 0.0 }
+    onDisable: function () { Tps = 0.0; packetHistory = [] }
 }
 
 command = {
@@ -59,5 +67,3 @@ command = {
             chat.print("TPS = " + Tps)
     }
 }
-
-script.import("Core.lib")
