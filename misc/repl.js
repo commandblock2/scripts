@@ -1,4 +1,12 @@
+///api_version=2
 //Copyright 2020 commandblock2 distributed under AGPL-3.0-or-later
+(script = registerScript({
+    name: "REPL",
+    version: "1.0",
+    authors: ["commandblock2"]
+})).import("Core.lib")
+
+
 Method = Java.type("java.lang.reflect.Method")
 Field = Java.type("java.lang.reflect.Field")
 Class = Java.type("java.lang.Class")
@@ -10,6 +18,13 @@ File = Java.type("java.io.File")
 Script = Java.type("net.ccbluex.liquidbounce.script.Script")
 Remapper = Java.type("net.ccbluex.liquidbounce.script.remapper.Remapper")
 GuiChat = Java.type("net.minecraft.client.gui.GuiChat")
+
+//In case of some strange behavior of this
+//When the client lauches REPL have ReferenceError: "C01PacketChatMessage" is not defined
+//Have to use .scriptmanager reload to solve if this line does not exist
+C01PacketChatMessage = Java.type("net.minecraft.network.play.client.C01PacketChatMessage")
+C14PacketTabComplete = Java.type("net.minecraft.network.play.client.C14PacketTabComplete")
+
 
 var multilineMsg = ""
 var history = []
@@ -35,6 +50,7 @@ onSteps = []
 onStepConfirms = []
 onWorlds = []
 onSessions = []
+onStrafes = []
 
 module =
 {
@@ -135,7 +151,8 @@ module =
     onStep: function (a) { onSteps.forEach(function (e) { invoke(e, [a]) }) },
     onStepConfirm: function (a) { onStepConfirms.forEach(function (e) { invoke(e, [a]) }) },
     onWorld: function (a) { onWorlds.forEach(function (e) { invoke(e, [a]) }) },
-    onSession: function () { onSessions.forEach(function (e) { invoke(e, []) }) }
+    onSession: function () { onSessions.forEach(function (e) { invoke(e, []) }) },
+    onStrafe: function (a) { onStrafes.forEach(function (e) { invoke(e, [a]) })}
 }
 
 var semanticSegment = /(\b(\w*?\.)*)(\w*)(?!.+(?:\w*?\.))/
@@ -191,13 +208,13 @@ function makeCompletion(event, packet) {
             var pre = match_[1]
             var post = match_[3]
 
-            try{
-            startIndex = semanticSegment.exec(messagestr).index
-            var noneEvalPre = messagestr.substring(0, startIndex)
+            try {
+                startIndex = semanticSegment.exec(messagestr).index
+                var noneEvalPre = messagestr.substring(0, startIndex)
 
-            endIndex = startIndex + match_[0].length
-            var noneEvalPost = messagestr.substring(endIndex, messagestr.length)
-            }catch(e){return}
+                endIndex = startIndex + match_[0].length
+                var noneEvalPost = messagestr.substring(endIndex, messagestr.length)
+            } catch (e) { return }
         }
 
         evaled_pre = pre.substring(0, pre.length - 1)
@@ -253,7 +270,7 @@ function makeCompletion(event, packet) {
 
                 evaled_pre = imported
             }
-        } catch (e) {}
+        } catch (e) { }
 
         inspect(evaled_pre).forEach(function (elem) { completion.push(elem) })
 
@@ -268,21 +285,20 @@ function makeCompletion(event, packet) {
         prefixMatchedOnlyCompletion = prefixMatchedOnlyCompletion.filter(function (elem) { return elem.startsWith(messagestr) })
         completion = prefixMatchedOnlyCompletion.concat(completion)
         completion.sort(function (lhs, rhs) {
-            try
-            {
+            try {
 
-            lIndex = lhs.lastIndexOf(post)
-            rIndex = rhs.lastIndexOf(post)
+                lIndex = lhs.lastIndexOf(post)
+                rIndex = rhs.lastIndexOf(post)
 
-            lIndex = (lIndex == -1 ? 80 : lIndex)
-            rIndex = (rIndex == -1 ? 80 : rIndex)
+                lIndex = (lIndex == -1 ? 80 : lIndex)
+                rIndex = (rIndex == -1 ? 80 : rIndex)
 
-            return lIndex - rIndex
-            } catch(e) {return 80}
+                return lIndex - rIndex
+            } catch (e) { return 80 }
         })
 
         final = []
-        completion.forEach(function (elem) { final.push(noneEvalPre + elem + noneEvalPost)})
+        completion.forEach(function (elem) { final.push(noneEvalPre + elem + noneEvalPost) })
         if (limitPrompt.get())
             final = final.slice(0, promptLimit.get())
 
@@ -397,5 +413,3 @@ function crashClientIfScriptIsAbleToLoadOtherwiseReportError(scriptName) {
         chat.print("§cError in " + scriptName + ": " + error)
     }
 }
-
-script.import("Core.lib");
