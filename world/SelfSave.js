@@ -1,5 +1,12 @@
+///api_version=2
 //Copyright 2020 commandblock2 distributed under AGPL-3.0-or-later
 //Part of these are skided from LB, but the license should be compatible
+(script = registerScript({
+    name: "SelfSave",
+    version: "1.0",
+    authors: ["commandblock2"]
+})).import("Core.lib")
+
 var on = false
 var startTimeOut = null
 
@@ -236,7 +243,5 @@ function faceCoord(vec3) {
         MathHelper.wrapAngleTo180_float(-toDgree(Math.atan2(diffY, diffXZ)))
     )
 }
-
-script.import("Core.lib")
 
 autoClicker = LiquidBounce.moduleManager.getModule("autoClicker")
