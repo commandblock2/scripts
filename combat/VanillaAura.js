@@ -1,4 +1,12 @@
+///api_version=2
 //Copyright 2020 commandblock2 distributed under AGPL-3.0-or-later
+(script = registerScript({
+    name: "VanillaAura",
+    version: "1.0",
+    authors: ["commandblock2"]
+})).import("Core.lib")
+
+
 Class = Java.type("java.lang.Class")
 var isEnemy
 var canBlock
@@ -27,7 +35,5 @@ module =
         isEnemy.setAccessible(true)
     }
 }
-
-script.import("Core.lib")
 
 killAura = LiquidBounce.moduleManager.getModule("killaura")
