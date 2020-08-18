@@ -64,20 +64,21 @@ module = {
                 dodging = false
             }
             else if (dodgeMode.get() == "BlockHit") {
-                for(i = 0; i< 9; i++){
-                    stack = mc.thePlayer.inventory.getStackInSlot(i)
-                    if(stack && stack.getItem() instanceof ItemSword && oIndex == -1){
-                        oIndex = mc.thePlayer.inventory.currentItem
-                        mc.thePlayer.inventory.currentItem = i
+                if (autoSwordBlockHit.get())
+                    for (i = 0; i < 9; i++) {
+                        stack = mc.thePlayer.inventory.getStackInSlot(i)
+                        if (stack && stack.getItem() instanceof ItemSword && oIndex == -1) {
+                            oIndex = mc.thePlayer.inventory.currentItem
+                            mc.thePlayer.inventory.currentItem = i
+                        }
                     }
-                }
-                
+
 
                 mc.gameSettings.keyBindUseItem.pressed = true
                 timeout(ticksToDodge.get() * 50, function () {
                     if (!dodging) {
                         mc.gameSettings.keyBindUseItem.pressed = false
-                        if(oIndex != -1) {
+                        if (oIndex != -1) {
                             mc.thePlayer.inventory.currentItem = oIndex
                             oIndex = -1
                         }
@@ -136,11 +137,11 @@ function playerPosInTicks(ticks) {
 
     //if (mc.thePlayer.onGround) {
 
-        for (index = 0; index < ticks; index++) {
-            multip = index + 1
-            poses.push(new Vec3(posX + multip * motionX, posY, posZ + multip * motionZ))
-        }
-        return poses
+    for (index = 0; index < ticks; index++) {
+        multip = index + 1
+        poses.push(new Vec3(posX + multip * motionX, posY, posZ + multip * motionZ))
+    }
+    return poses
     //}
 
 
