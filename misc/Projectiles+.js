@@ -1,9 +1,20 @@
+///api_version=2
 //Copyright 2020 commandblock2 distributed under AGPL-3.0-or-later
+(script = registerScript({
+    name: "ProjectilesPlus",
+    version: "1.0",
+    authors: ["commandblock2"]
+})).import("Core.lib")
+
 Color = Java.type("java.awt.Color")
 GL11 = Java.type("org.lwjgl.opengl.GL11")
 
 HashMap = Java.type("java.util.HashMap")
 Material = Java.type("net.minecraft.block.material.Material")
+
+
+RenderUtils = Java.type("net.ccbluex.liquidbounce.utils.render.RenderUtils")
+//Idk why that happens same as REPL
 //God damn fuck
 
 entity2PositionHistorys = new HashMap()
@@ -14,7 +25,7 @@ dodging = false
 oIndex = -1
 
 module = {
-    name: "Projectiles+",
+    name: "ProjectilesPlus",
     description: "Projectlies for Arrows that is already in air(for now)",
     author: "commandblock2",
     category: "misc",
@@ -196,7 +207,9 @@ function predict(entityArrow) {
     poses = []
     poses.push(entityArrow.getPositionVector())
 
-    //hasLanded = false
+    if(!poses[0]) return
+    //FUCK IDK WHY BUT JUST MIGHT HAPPEN
+    
     x = poses[0].xCoord
     y = poses[0].yCoord
     z = poses[0].zCoord
@@ -277,5 +290,3 @@ function drawLine(poses, color) {
     GL11.glEnable(GL11.GL_TEXTURE_2D);
     GL11.glPopMatrix();
 }
-
-script.import("Core.lib")
