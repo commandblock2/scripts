@@ -1,9 +1,9 @@
 # AGPL警告|WARNING:AGPL   
-### scripts
+## scripts
 scripts for LiquidBounce
-#### dependencies:
+## dependencies:
  Core.lib of CzechHek https://github.com/CzechHek/Core
-#### license
+## license
     scripts for LiquidBounce 
     Copyright (C) 2020 commandblock2 
 
