@@ -1,4 +1,12 @@
+///api_version=2
 //Copyright 2020 commandblock2 distributed under AGPL-3.0-or-later
+(script = registerScript({
+    name: "AutoGapple",
+    version: "1.0",
+    authors: ["LolMc","commandblock2"]
+})).import("Core.lib")
+
+
 GuiInventory = Java.type("net.minecraft.client.gui.inventory.GuiInventory")
 Potion = Java.type('net.minecraft.potion.Potion')
 
@@ -8,7 +16,6 @@ module =
 {
     name: "AutoGapple",
     description: "Eat gapple when your health is low",
-    author: "commandblock2",
     category: "combat",
     values:
         [
@@ -72,5 +79,3 @@ function switchGapple(index) {
         mc.thePlayer.closeScreen()
     })
 }
-
-script.import("Core.lib")
