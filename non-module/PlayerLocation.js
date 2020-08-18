@@ -1,4 +1,11 @@
+///api_version=2
 //Copyright 2020 commandblock2 distributed under AGPL-3.0-or-later
+(script = registerScript({
+    name: "PlayerLocation",
+    version: "1.0",
+    authors: ["commandblock2"]
+})).import("Core.lib")
+
 
 command = {
     commands: ["playerlocation", "pl"],
@@ -36,5 +43,3 @@ command = {
 function idk(num, bool) {
     return (bool ? num : Math.floor(num))
 }
-
-script.import("Core.lib")
