@@ -1,4 +1,12 @@
+///api_version=2
 //Copyright 2020 commandblock2 distributed under AGPL-3.0-or-later
+//Part of these are skided from LB, but the license should be compatible
+(script = registerScript({
+    name: "WTAPbot",
+    version: "1.0",
+    authors: ["commandblock2"]
+})).import("Core.lib")
+
 RotationUtils = Java.type("net.ccbluex.liquidbounce.utils.RotationUtils")
 PlayerExtension = Java.type("net.ccbluex.liquidbounce.utils.extensions.PlayerExtensionKt")
 Class = Java.type("java.lang.Class")
@@ -37,13 +45,14 @@ module =
             sneak = value.createBoolean("Sneak", false),
             stopKey = value.createText("StopKey", "Z"),
             noBack = value.createBoolean("No S-Tap", true),
-            aimMode = value.createList("AimMode", ["Predictive", "Face", "LegitLike"], "Predictive")
+            aimMode = value.createList("AimMode", ["Predictive", "Face", "LegitLike"], "Predictive"),
+            singleAuraMode = value.createBoolean("FastComfirm", false)
         ],
 
     onRender3D: function () {
         var thisFrameLeftDown = mc.gameSettings.keyBindAttack.isKeyDown()
 
-        if (!lastFrameLeftDown && thisFrameLeftDown)
+        if ((!lastFrameLeftDown || singleAuraMode.get()) && thisFrameLeftDown)
             onLeftClick()
         lastFrameLeftDown = thisFrameLeftDown
 
@@ -193,8 +202,6 @@ function onLeftClick() {
             break;
     }
 }
-
-script.import("Core.lib")
 
 autoClicker = LiquidBounce.moduleManager.getModule("autoClicker")
 killAura = LiquidBounce.moduleManager.getModule("killaura")
