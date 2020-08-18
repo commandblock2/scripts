@@ -1,4 +1,11 @@
+///api_version=2
 //Copyright 2020 commandblock2 distributed under AGPL-3.0-or-later
+(script = registerScript({
+    name: "EndPortalLocate",
+    version: "1.0",
+    authors: ["commandblock2"]
+})).import("Core.lib")
+
 Color = Java.type("java.awt.Color")
 GL11 = Java.type("org.lwjgl.opengl.GL11")
 
@@ -117,5 +124,3 @@ function drawLine(poses, color) {
     GL11.glEnable(GL11.GL_TEXTURE_2D);
     GL11.glPopMatrix();
 }
-
-script.import("Core.lib")
