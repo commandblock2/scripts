@@ -18,6 +18,7 @@ File = Java.type("java.io.File")
 Script = Java.type("net.ccbluex.liquidbounce.script.Script")
 Remapper = Java.type("net.ccbluex.liquidbounce.script.remapper.Remapper")
 GuiChat = Java.type("net.minecraft.client.gui.GuiChat")
+ClassUtils = Java.type("net.ccbluex.liquidbounce.utils.ClassUtils")
 
 //In case of some strange behavior of this
 //When the client lauches REPL have ReferenceError: "C01PacketChatMessage" is not defined
@@ -137,7 +138,12 @@ module =
         guiChat = mc.currentScreen
         if (guiChat instanceof GuiChat) {
 
-            fieldInputField = guiChat.class.getDeclaredField("field_146415_a") // Hack Hack Hack
+            if(ClassUtils.hasClass("net.optifine.gui.GuiChatOF"))
+                guiChatClass = guiChat.class.getSuperclass()
+            else
+                guiChatClass = guiChat.class
+
+            fieldInputField = guiChatClass.getDeclaredField("field_146415_a") // Hack Hack Hack
             fieldInputField.setAccessible(true)
             inputField = fieldInputField.get(guiChat)
 
@@ -190,11 +196,16 @@ function makeCompletion(event, packet) {
 
         guiChat = mc.currentScreen
 
-        fieldWaitOnAutoCompletion = guiChat.class.getDeclaredField("field_146414_r") // Hack Hack Hack
+        if(ClassUtils.hasClass("net.optifine.gui.GuiChatOF"))
+            guiChatClass = mc.currentScreen.class.getSuperclass()
+        else
+            guiChatClass = mc.currentScreen.class
+
+        fieldWaitOnAutoCompletion = guiChatClass.getDeclaredField("field_146414_r") // Hack Hack Hack
         fieldWaitOnAutoCompletion.setAccessible(true)
         fieldWaitOnAutoCompletion.set(guiChat, true)
 
-        fieldInputField = guiChat.class.getDeclaredField("field_146415_a") // Hack Hack Hack
+        fieldInputField = guiChatClass.getDeclaredField("field_146415_a") // Hack Hack Hack
         fieldInputField.setAccessible(true)
         inputField = fieldInputField.get(guiChat)
 
