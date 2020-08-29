@@ -18,7 +18,7 @@ module =
     values: [
         hurtTime = value.createInteger("HurtTime", 2, 1, 10),
         extraDelay4Blocking = value.createInteger("ExtraDelay", 1, 0, 10),
-        extraDelay = value.createInteger("ExtraIdleDelay", 0, 0, 10)
+        extraDelay = value.createInteger("ExtraIdleDelay", 1, 0, 10)
     ],
 
     onAttack: function () {
