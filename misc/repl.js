@@ -127,7 +127,6 @@ module =
                 guiChatClass = guiChat.class
 
             fieldInputField = getField(guiChatClass, "field_146415_a") // Hack Hack Hack
-            fieldInputField.setAccessible(true)
             inputField = fieldInputField.get(guiChat)
 
             inputField.setMaxStringLength(200)
