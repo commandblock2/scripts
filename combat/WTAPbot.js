@@ -7,12 +7,6 @@
     authors: ["commandblock2"]
 })).import("Core.lib")
 
-RotationUtils = Java.type("net.ccbluex.liquidbounce.utils.RotationUtils")
-PlayerExtension = Java.type("net.ccbluex.liquidbounce.utils.extensions.PlayerExtensionKt")
-Class = Java.type("java.lang.Class")
-Keyboard = Java.type("org.lwjgl.input.Keyboard")
-MSTimer = Java.type("net.ccbluex.liquidbounce.utils.timer.MSTimer")
-
 var countDownClicks = 5
 
 var target = null
@@ -59,7 +53,7 @@ module =
         if (countDown == 0) {
             //main loop
             mc.gameSettings.keyBindSprint.pressed = true
-            if (mc.theWorld.loadedEntityList.indexOf(target) != -1 && (PlayerExtension.getDistanceToEntityBox(mc.thePlayer, target) < getMaxDistance() + captureRange.get()) && continue_ && !mc.thePlayer.isDead) {
+            if (mc.theWorld.loadedEntityList.indexOf(target) != -1 && (PlayerExtensionKt.getDistanceToEntityBox(mc.thePlayer, target) < getMaxDistance() + captureRange.get()) && continue_ && !mc.thePlayer.isDead) {
 
                 aim()    
 
@@ -72,7 +66,7 @@ module =
                 countDown = 5
                 mc.gameSettings.keyBindAttack.pressed = false
                 mc.gameSettings.keyBindBack.pressed = false
-                autoClicker.state = false
+                AutoClickerModule.state = false
                 target = null
                 block.get() && (mc.gameSettings.keyBindUseItem.pressed = false);
                 sneak.get() && (mc.gameSettings.keyBindSneak.pressed = false);
@@ -84,7 +78,7 @@ module =
     },
 
     onEnable: function () {
-        isEnemy = killAura.class.getDeclaredMethod("isEnemy", Class.forName("net.minecraft.entity.Entity"))
+        isEnemy = KillAuraModule.class.getDeclaredMethod("isEnemy", Class.forName("net.minecraft.entity.Entity"))
         isEnemy.setAccessible(true)
     },
 
@@ -114,7 +108,7 @@ module =
 function setSprintState() {
 
     delay = slowDownDelay.get()
-    if(PlayerExtension.getDistanceToEntityBox(mc.thePlayer, target) < getMaxDistance() - distanceToMoreDelay.get())
+    if(PlayerExtensionKt.getDistanceToEntityBox(mc.thePlayer, target) < getMaxDistance() - distanceToMoreDelay.get())
         delay += moreDelayToKeepDistance.get()
 
     if (timer.hasTimePassed(delay)) {
@@ -134,12 +128,12 @@ function setSprintState() {
 }
 
 function aim() {
-    autoClicker.state = true
+    AutoClickerModule.state = true
     mc.gameSettings.keyBindAttack.pressed = true
 
     targetPrevPoss[targetPrevPoss.length - 1] = target.getPositionVector()
 
-    index = Math.floor(targetPrevPoss.length * (1 - Math.max(Math.min(PlayerExtension.getDistanceToEntityBox(mc.thePlayer, target) / getMaxDistance() - 1, 1), 0.01)))
+    index = Math.floor(targetPrevPoss.length * (1 - Math.max(Math.min(PlayerExtensionKt.getDistanceToEntityBox(mc.thePlayer, target) / getMaxDistance() - 1, 1), 0.01)))
     vecTarget = targetPrevPoss[index]
 
     x_offset = vecTarget.xCoord - target.posX; y_offset = vecTarget.yCoord - target.posY; z_offset = vecTarget.zCoord - target.posZ;
@@ -156,7 +150,7 @@ function aim() {
 }
 
 function getMaxDistance() {
-    return reach.state ? reach.getValue("CombatReach").get() : 3.0
+    return ReachModule.state ? ReachModule.getValue("CombatReach").get() : 3.0
 }
 
 function onLeftClick() {
@@ -167,10 +161,10 @@ function onLeftClick() {
     forEach.call(entities, function (elem) {
         diff = RotationUtils.getRotationDifference(elem)
 
-        if (PlayerExtension.getDistanceToEntityBox(mc.thePlayer, elem) > getMaxDistance() + captureRange.get())
+        if (PlayerExtensionKt.getDistanceToEntityBox(mc.thePlayer, elem) > getMaxDistance() + captureRange.get())
             return
 
-        if (elem == mc.thePlayer || !isEnemy.invoke(killAura, elem))
+        if (elem == mc.thePlayer || !isEnemy.invoke(KillAuraModule, elem))
             return
 
         if (diff < mindiff) {
@@ -202,7 +196,3 @@ function onLeftClick() {
             break;
     }
 }
-
-autoClicker = LiquidBounce.moduleManager.getModule("autoClicker")
-killAura = LiquidBounce.moduleManager.getModule("killaura")
-reach = moduleManager.getModule("Reach");
