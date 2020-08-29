@@ -8,24 +8,9 @@
 
 
 Method = Java.type("java.lang.reflect.Method")
-Field = Java.type("java.lang.reflect.Field")
-Class = Java.type("java.lang.Class")
-ClassLoader = Java.type("java.lang.ClassLoader")
-Thread = Java.type("java.lang.Thread")
 Package = Java.type("java.lang.Package")
 ClassPath = Java.type("com.google.common.reflect.ClassPath")
-File = Java.type("java.io.File")
-Script = Java.type("net.ccbluex.liquidbounce.script.Script")
 Remapper = Java.type("net.ccbluex.liquidbounce.script.remapper.Remapper")
-GuiChat = Java.type("net.minecraft.client.gui.GuiChat")
-ClassUtils = Java.type("net.ccbluex.liquidbounce.utils.ClassUtils")
-
-//In case of some strange behavior of this
-//When the client lauches REPL have ReferenceError: "C01PacketChatMessage" is not defined
-//Have to use .scriptmanager reload to solve if this line does not exist
-C01PacketChatMessage = Java.type("net.minecraft.network.play.client.C01PacketChatMessage")
-C14PacketTabComplete = Java.type("net.minecraft.network.play.client.C14PacketTabComplete")
-
 
 var multilineMsg = ""
 var history = []
@@ -75,8 +60,7 @@ module =
     onEnable: function () {
         chat.print("§6[nashorn REPL]: Welcom to in-game js REPL")
 
-        fieldsField = Remapper.INSTANCE.class.getDeclaredField("fields")
-        fieldsField.setAccessible(true)
+        fieldsField = getField(Remapper.INSTANCE, "fields")
         fields_ = fieldsField.get(Remapper.INSTANCE)
 
         Java.from(fields_.values()).forEach(function (elem) {
@@ -92,8 +76,7 @@ module =
             }
         })
 
-        methodsField = Remapper.INSTANCE.class.getDeclaredField("methods")
-        methodsField.setAccessible(true)
+        methodsField = getField(Remapper.INSTANCE, "methods")
         methods_ = methodsField.get(Remapper.INSTANCE)
 
 
@@ -143,7 +126,7 @@ module =
             else
                 guiChatClass = guiChat.class
 
-            fieldInputField = guiChatClass.getDeclaredField("field_146415_a") // Hack Hack Hack
+            fieldInputField = getField(guiChatClass, "field_146415_a") // Hack Hack Hack
             fieldInputField.setAccessible(true)
             inputField = fieldInputField.get(guiChat)
 
@@ -187,8 +170,7 @@ function exec_(string) {
 
 function makeCompletion(event, packet) {
 
-    fieldMessage = packet.class.getDeclaredField("field_149420_a") // Hack Hack Hack
-    fieldMessage.setAccessible(true)
+    fieldMessage = getField(packet, "field_149420_a") // Hack Hack Hack
     messagestr = fieldMessage.get(packet)
 
     if (!usePrefix.get() || messagestr.startsWith(prefix.get())) {
@@ -201,16 +183,13 @@ function makeCompletion(event, packet) {
         else
             guiChatClass = mc.currentScreen.class
 
-        fieldWaitOnAutoCompletion = guiChatClass.getDeclaredField("field_146414_r") // Hack Hack Hack
-        fieldWaitOnAutoCompletion.setAccessible(true)
+        fieldWaitOnAutoCompletion = getField(guiChatClass, "field_146414_r") // Hack Hack Hack
         fieldWaitOnAutoCompletion.set(guiChat, true)
 
-        fieldInputField = guiChatClass.getDeclaredField("field_146415_a") // Hack Hack Hack
-        fieldInputField.setAccessible(true)
+        fieldInputField = getField(guiChatClass, "field_146415_a") // Hack Hack Hack
         inputField = fieldInputField.get(guiChat)
 
-        textField = inputField.class.getDeclaredField("field_146216_j")
-        textField.setAccessible(true)
+        textField = getField(inputField, "field_146216_j")
 
 
         match_ = messagestr.match(semanticSegment)

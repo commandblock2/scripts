@@ -13,7 +13,6 @@ HashMap = Java.type("java.util.HashMap")
 Material = Java.type("net.minecraft.block.material.Material")
 
 
-RenderUtils = Java.type("net.ccbluex.liquidbounce.utils.render.RenderUtils")
 //Idk why that happens same as REPL
 //God damn fuck
 

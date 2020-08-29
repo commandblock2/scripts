@@ -32,5 +32,5 @@ module =
 
 function leave() {
     mc.thePlayer.sendChatMessage(message.get())
-    moduleManager.getModule("YetAnotherAutoLeave").setState(false)
+    YetAnotherAutoLeaveModule.state = false;
 }

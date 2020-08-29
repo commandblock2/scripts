@@ -7,7 +7,6 @@
 })).import("Core.lib")
 
 
-GuiInventory = Java.type("net.minecraft.client.gui.inventory.GuiInventory")
 Potion = Java.type('net.minecraft.potion.Potion')
 
 var originalIndex = -1

@@ -147,7 +147,7 @@ function selfSaveDeactivate() {
 function deactivate()
 {
     on = false
-    autoClicker.state = false
+    AutoClickerModule.state = false
     mc.gameSettings.keyBindUseItem.pressed = false
 }
 
@@ -156,7 +156,7 @@ function avg(a, b) { return (a + b) / 2 }
 function toDgree(rad) { return rad * 180 / Math.PI }
 
 function aim() {
-    autoClicker.state = true
+    AutoClickerModule.state = true
     block = getNearstFullBlock(mc.thePlayer.getPositionVector().add(new Vec3(0, -1, 0)), 10)
 
     surfaceCentrals = getCentralPosOf6Surfaces(block)
@@ -243,5 +243,3 @@ function faceCoord(vec3) {
         MathHelper.wrapAngleTo180_float(-toDgree(Math.atan2(diffY, diffXZ)))
     )
 }
-
-autoClicker = LiquidBounce.moduleManager.getModule("autoClicker")

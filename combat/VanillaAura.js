@@ -7,7 +7,6 @@
 })).import("Core.lib")
 
 
-Class = Java.type("java.lang.Class")
 var isEnemy
 var canBlock
 module =
@@ -19,7 +18,7 @@ module =
 
     onUpdate: function () {
         target = Java.from(mc.theWorld.loadedEntityList)
-            .filter(function (e) { return isEnemy.invoke(killAura, e) })
+            .filter(function (e) { return isEnemy.invoke(KillAuraModule, e) })
             .sort(function (lhs, rhs) { return mc.thePlayer.getDistanceToEntity(lhs) - mc.thePlayer.getDistanceToEntity(rhs) })[0]
 
         if(!target) return
@@ -31,9 +30,6 @@ module =
     },
 
     onEnable: function () {
-        isEnemy = killAura.class.getDeclaredMethod("isEnemy", Class.forName("net.minecraft.entity.Entity"))
-        isEnemy.setAccessible(true)
+        isEnemy = getMethod(KillAuraModule, "isEnemy")
     }
 }
-
-killAura = LiquidBounce.moduleManager.getModule("killaura")
