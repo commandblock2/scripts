@@ -7,7 +7,6 @@
 })).import("Core.lib")
 
 NetworkPlayerInfo = Java.type("net.minecraft.client.network.NetworkPlayerInfo")
-MSTimer = Java.type("net.ccbluex.liquidbounce.utils.timer.MSTimer")
 
 translation = [["蓝", "Blue", "§1"], ["黄", "Yellow", "§e"], ["红", "Red", "§4"], ["绿", "Green", "§2"]]
 team = []
@@ -61,10 +60,8 @@ module = {
                     displayName = EntityUtils.getName(e)
                     scoreBoard.addPlayerToTeam(e.getGameProfile().getName(), getColor(displayName))
 
-
-                    teams = LiquidBounce.moduleManager.getModule("Teams")
-                    teams.state = true
-                    teams.getValue("color").set(false)
+                    TeamsModule.state = true
+                    TeamsModule.getValue("color").set(false)
                 }
                 catch (e) { }
             })

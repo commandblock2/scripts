@@ -6,13 +6,9 @@
     authors: ["commandblock2"]
 })).import("Core.lib")
 
-ClientUtils = Java.type("net.ccbluex.liquidbounce.utils.ClientUtils");
-PlayerExtension = Java.type("net.ccbluex.liquidbounce.utils.extensions.PlayerExtensionKt");
 GL11 = Java.type("org.lwjgl.opengl.GL11");
 Display = Java.type("org.lwjgl.opengl.Display");
-Gui = Java.type("net.minecraft.client.gui.Gui");
 Color = Java.type("java.awt.Color");
-ScaledResolution = Java.type("net.minecraft.client.gui.ScaledResolution")
 
 module =
 {
@@ -27,11 +23,11 @@ module =
 
     onRender2D: function () 
     {
-        var maxDistance = reach.state ? reach.getValue("CombatReach").get() : 3.0
+        var maxDistance = ReachModule.state ? ReachModule.getValue("CombatReach").get() : 3.0
         var distance = 0
 
         if (mc.objectMouseOver && mc.objectMouseOver.entityHit)
-            distance = PlayerExtension.getDistanceToEntityBox
+            distance = PlayerExtensionKt.getDistanceToEntityBox
                 (mc.thePlayer, mc.objectMouseOver.entityHit).toString();
 
 
@@ -67,5 +63,3 @@ module =
         
     }
 }
-
-reach = moduleManager.getModule("Reach");
