@@ -8,6 +8,8 @@
 
 blockingTimeOut = null
 
+shouldUpdate = false
+KAS = false
 
 module =
 {
@@ -39,6 +41,11 @@ module =
     },
 
     onUpdate: function () {
+        if(shouldUpdate) {
+            KillAuraModule.state = KAS
+            shouldUpdate = false
+        }
+
         if (blockingTimeOut && KillAuraModule.state) {
             //manually toggoled
             blockingTimeOut.cancel()
@@ -56,7 +63,8 @@ function doUnblock() {
 }
 
 function reReableKillAura() {
-    KillAuraModule.state = true
+    shouldUpdate = true
+    KAS = true
 }
 
 function doBlock() {
@@ -64,5 +72,6 @@ function doBlock() {
 }
 
 function disableKillAura() {
-    KillAuraModule.state = false
-}
+    shouldUpdate = true
+    KAS = false
+} 
