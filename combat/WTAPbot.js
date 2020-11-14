@@ -160,6 +160,11 @@ function setSprintState() {
         mc.gameSettings.keyBindLeft.pressed = true
     }
 
+    if (rightDown && leftDown) {
+        mc.gameSettings.keyBindLeft.pressed = true
+        mc.gameSettings.keyBindRight.pressed = true
+    }
+
     prevSprintState = comboSprint
 }
 
