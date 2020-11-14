@@ -7,6 +7,8 @@
     authors: ["commandblock2"]
 })).import("Core.lib")
 
+GameSettings = Java.type("net.minecraft.client.settings.GameSettings")
+
 var countDownClicks = 5
 
 var target = null
@@ -18,7 +20,10 @@ var countDown = countDownClicks
 var lastFrameLeftDown = false
 var continue_ = true
 
+var strafeLeft = true
+
 var timer = new MSTimer()
+var strafeTimer = new MSTimer()
 
 var forEach = Array.prototype.forEach;
 
@@ -40,7 +45,9 @@ module =
             stopKey = value.createText("StopKey", "Z"),
             noBack = value.createBoolean("No S-Tap", true),
             aimMode = value.createList("AimMode", ["Predictive", "Face", "LegitLike"], "Predictive"),
-            singleAuraMode = value.createBoolean("FastComfirm", false)
+            singleAuraMode = value.createBoolean("FastComfirm", false),
+            adStrafe = value.createBoolean("AD-Strafe", true),
+            strafeInterval = value.createInteger("StrafeInterval", 500, 50, 2000)
         ],
 
     onRender3D: function () {
@@ -72,6 +79,9 @@ module =
                 sneak.get() && (mc.gameSettings.keyBindSneak.pressed = false);
                 noBack.get() || (mc.gameSettings.keyBindBack.pressed = false);
                 mc.gameSettings.keyBindForward.pressed = false;
+                
+                adStrafe.get() && (mc.gameSettings.keyBindLeft.pressed = false);
+                adStrafe.get() && (mc.gameSettings.keyBindRight.pressed = false);     
                 continue_ = true
             }
         }
@@ -121,6 +131,33 @@ function setSprintState() {
         sneak.get() && (mc.gameSettings.keyBindSneak.pressed = true);
         noBack.get() || (mc.gameSettings.keyBindBack.pressed = true);
         mc.gameSettings.keyBindForward.pressed = false
+    }
+
+    if (adStrafe.get())
+        if (strafeLeft){
+            mc.gameSettings.keyBindLeft.pressed = true
+            mc.gameSettings.keyBindRight.pressed = false
+        } else{
+            mc.gameSettings.keyBindLeft.pressed = false
+            mc.gameSettings.keyBindRight.pressed = true
+        }
+    
+    if (strafeTimer.hasTimePassed(strafeInterval.get())) {
+        strafeTimer.reset()
+        strafeLeft = !strafeLeft
+    }
+
+    leftDown = Keyboard.isKeyDown(mc.gameSettings.keyBindLeft.getKeyCode())
+    rightDown = Keyboard.isKeyDown(mc.gameSettings.keyBindRight.getKeyCode())
+
+    if(rightDown) {
+        mc.gameSettings.keyBindRight.pressed = true
+        mc.gameSettings.keyBindLeft.pressed = false
+    }
+
+    if (leftDown) {
+        mc.gameSettings.keyBindRight.pressed = false
+        mc.gameSettings.keyBindLeft.pressed = true
     }
 
     prevSprintState = comboSprint
