@@ -32,8 +32,8 @@ module = {
             if (mode.get() == "Player")
                 yaw = -(mc.thePlayer.rotationYaw + offset.get() + 180)
             else {
-                yaw =  Math.atan2(packet.motionZ, packet.motionX) / Math.PI * 180 + offset.get()
-
+                yaw =  (Math.atan2(packet.motionX, packet.motionZ) * 180 / Math.PI) + offset.get()
+                chat.print(yaw)
             }
             velocity = Math.sqrt(packet.motionX * packet.motionX + packet.motionZ * packet.motionZ) * amplifier.get()
 
