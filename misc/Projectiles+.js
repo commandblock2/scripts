@@ -19,9 +19,11 @@ Material = Java.type("net.minecraft.block.material.Material")
 entity2PositionHistorys = new HashMap()
 entity2PositionPredicition = new HashMap()
 playerPositionPrediction = []
-dodging = false
+dodging = null
+targetPos = null
 
 oIndex = -1
+oYaw = -1
 
 module = {
     name: "ProjectilesPlus",
@@ -29,10 +31,13 @@ module = {
     author: "commandblock2",
     category: "misc",
     values: [
-        arrowDodge = value.createBoolean("ArrowDodge", true),
+        arrowDodge = value.createBoolean("ArrowDodge", true
+
+),
+
         ticksToDodge = value.createInteger("TicksToDodge", 5, 1, 20),
         renderPlayerPrediction = value.createBoolean("RenderPlayerPrediction", false),
-        dodgeMode = value.createList("DodgeMode", ["TeleportUp", "BlockHit"], "BlockHit"),
+        dodgeMode = value.createList("DodgeMode", ["TeleportUp", "BlockHit", "HorizontalSpeed"], "BlockHit"),
         autoSwordBlockHit = value.createBoolean("AutoSword4BlockHit", true)
     ],
 
@@ -71,7 +76,7 @@ module = {
         if (dodging)
             if (dodgeMode.get() == "TeleportUp") {
                 mc.thePlayer.setPosition(mc.thePlayer.posX, mc.thePlayer.posY + 2, mc.thePlayer.posZ)
-                dodging = false
+                dodging = null
             }
             else if (dodgeMode.get() == "BlockHit") {
                 if (autoSwordBlockHit.get())
@@ -85,6 +90,7 @@ module = {
 
 
                 mc.gameSettings.keyBindUseItem.pressed = true
+                
                 timeout(ticksToDodge.get() * 50, function () {
                     if (!dodging) {
                         mc.gameSettings.keyBindUseItem.pressed = false
@@ -93,12 +99,46 @@ module = {
                             oIndex = -1
                         }
                     }
-                    dodging = false
+                    dodging = null
+                })
+            }
+            else if (dodgeMode.get() == "HorizontalSpeed") {
+                if (-1 == oYaw)
+                    oYaw = mc.thePlayer.rotationYaw
+                
+                
+                right = new Rotation(dodging - 90, mc.thePlayer.rotationPitch)
+                left = new Rotation(dodging + 90, mc.thePlayer.rotationPitch)
+                
+                rightYaw = right.yaw / 180 * Math.PI
+                leftYaw = left.yaw / 180 * Math.PI
+                
+                rightDis = mc.thePlayer.getPositionVector().add(RotationUtils.getVectorForRotation(right)).subtract(targetPos).lengthVector()
+                leftDis = mc.thePlayer.getPositionVector().add(RotationUtils.getVectorForRotation(left)).subtract(targetPos).lengthVector()
+                
+                rot = (rightDis > leftDis) ? right : left
+                
+                rot.toPlayer(mc.thePlayer)
+                SpeedModule.state = true
+                mc.gameSettings.keyBindForward.pressed = true
+                
+                timeout(ticksToDodge.get() * 50, function () {
+                    if (!dodging) {
+                        if (oYaw != -1)
+                        new Rotation(oYaw, mc.thePlayer.rotationPitch).toPlayer(mc.thePlayer)
+                        
+                        SpeedModule.state = false
+                        mc.gameSettings.keyBindForward.pressed = false
+                        
+                        oYaw = -1
+                    }
+                    dodging = null
                 })
             }
     },
 
     onRender3D: function (event) {
+        
         entity2PositionHistorys.forEach(function (entity) {
             //Draw the history line
             drawLine(entity2PositionHistorys[entity], new Color(255, 255, 0))
@@ -228,14 +268,18 @@ function predict(entityArrow) {
         playerBoundingBox = mc.thePlayer.getEntityBoundingBox().expand(0.3, 0.3, 0.3)
         index = poses.length > ticksToDodge.get() ? ticksToDodge.get() : poses.length
         pos = playerPositionPrediction[index]
-        if (playerBoundingBox.calculateIntercept(posBefore, posAfter) && poses.length <= ticksToDodge.get())
-            dodging = true
+        if (playerBoundingBox.calculateIntercept(posBefore, posAfter) && poses.length <= ticksToDodge.get()) {
+            targetPos = posBefore
+            dodging = Math.atan2(motionZ, motionX) * 180 / Math.PI + 90
+        }
 
         playerBoundingBox = playerBoundingBox.offset(pos.xCoord - mc.thePlayer.posX, pos.yCoord - mc.thePlayer.posY, pos.zCoord - mc.thePlayer.posZ)
 
 
-        if (playerBoundingBox.calculateIntercept(posBefore, posAfter) && poses.length <= ticksToDodge.get())
-            dodging = true
+        if (playerBoundingBox.calculateIntercept(posBefore, posAfter) && poses.length <= ticksToDodge.get()) {
+            targetPos = posBefore
+            dodging = Math.atan2(motionZ, motionX) * 180 / Math.PI + 90
+        }
 
         // motion thing
         x += motionX
