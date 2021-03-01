@@ -37,7 +37,7 @@ module = {
 
         ticksToDodge = value.createInteger("TicksToDodge", 5, 1, 20),
         renderPlayerPrediction = value.createBoolean("RenderPlayerPrediction", false),
-        dodgeMode = value.createList("DodgeMode", ["TeleportUp", "BlockHit", "HorizontalSpeed"], "BlockHit"),
+        dodgeMode = value.createList("DodgeMode", ["TeleportUp", "BlockHit", "HorizontalSpeed", "HorizontalTp", "HorizontalMotion"], "BlockHit"),
         autoSwordBlockHit = value.createBoolean("AutoSword4BlockHit", true)
     ],
 
@@ -102,10 +102,9 @@ module = {
                     dodging = null
                 })
             }
-            else if (dodgeMode.get() == "HorizontalSpeed") {
+            else if (dodgeMode.get().indexOf("Horizontal") != -1) {
                 if (-1 == oYaw)
                     oYaw = mc.thePlayer.rotationYaw
-                
                 
                 right = new Rotation(dodging - 90, mc.thePlayer.rotationPitch)
                 left = new Rotation(dodging + 90, mc.thePlayer.rotationPitch)
@@ -117,6 +116,23 @@ module = {
                 leftDis = mc.thePlayer.getPositionVector().add(RotationUtils.getVectorForRotation(left)).subtract(targetPos).lengthVector()
                 
                 rot = (rightDis > leftDis) ? right : left
+                
+                if (dodgeMode.get() == "HorizontalTp") {
+                    mc.thePlayer.setPosition(mc.thePlayer.posX + Math.sin(Math.toRadians(rot.yaw)),
+                        mc.thePlayer.posY,
+                        mc.thePlayer.posZ + Math.cos(Math.toRadians(rot.yaw)))
+                    
+                    dodging = null
+                    return
+                }
+                
+                if (dodgeMode.get() == "HorizontalMotion") {
+                    mc.thePlayer.motionX = Math.sin(Math.toRadians(rot.yaw))
+                    mc.thePlayer.motionZ = Math.cos(Math.toRadians(rot.yaw))
+                    
+                    dodging = null
+                    return
+                }
                 
                 rot.toPlayer(mc.thePlayer)
                 SpeedModule.state = true
